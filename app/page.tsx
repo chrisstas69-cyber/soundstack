@@ -1,4 +1,5 @@
-import { DealRadar, DealRadarFallback } from "@/components/deal-radar";
+import { DealRadarFallback } from "@/components/deal-radar";
+import { DealRadarLoader } from "@/components/deal-radar-loader";
 import { Header } from "@/components/header";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { formatIsoDate, getDeals, latestAddedAt } from "@/lib/deals";
@@ -33,7 +34,7 @@ export default function HomePage() {
           </p>
         </section>
         <Suspense fallback={<DealRadarFallback deals={deals} />}>
-          <DealRadar deals={deals} />
+          <DealRadarLoader deals={deals} />
         </Suspense>
         <section className="border-t border-line">
           <div className="mx-auto max-w-6xl px-5 py-16">

@@ -83,5 +83,5 @@ function isDuplicate(error: { message: string; statusCode: number | null }) {
 }
 
 function shouldRetryAsSegment(message: string) {
-  return /audience|segment|not found|deprecated|invalid/i.test(message);
+  return /audience|segment/i.test(message);
 }

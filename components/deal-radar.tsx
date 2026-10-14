@@ -7,13 +7,20 @@ import {
 } from "@/lib/deals";
 import { CATEGORIES, type Deal, type DealCategory } from "@/lib/types";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 
-export function DealRadar({ deals }: { deals: Deal[] }) {
+export function DealRadar({
+  deals,
+  today,
+}: {
+  deals: Deal[];
+  today: string;
+}) {
   const params = useSearchParams();
   return (
     <DealRadarView
       deals={deals}
+      today={today}
       initialQuery={params.get("q") ?? ""}
       initialCategory={params.get("category") ?? "all"}
     />
@@ -21,15 +28,24 @@ export function DealRadar({ deals }: { deals: Deal[] }) {
 }
 
 export function DealRadarFallback({ deals }: { deals: Deal[] }) {
-  return <DealRadarView deals={deals} initialQuery="" initialCategory="all" />;
+  return (
+    <DealRadarView
+      deals={deals}
+      today={null}
+      initialQuery=""
+      initialCategory="all"
+    />
+  );
 }
 
 function DealRadarView({
   deals,
+  today,
   initialQuery,
   initialCategory,
 }: {
   deals: Deal[];
+  today: string | null;
   initialQuery: string;
   initialCategory: string;
 }) {
@@ -37,7 +53,6 @@ function DealRadarView({
   const [category, setCategory] = useState<string>(
     isCategory(initialCategory) ? initialCategory : "all",
   );
-  const today = useSyncExternalStore(subscribe, getToday, getServerToday);
 
   const counts = useMemo(() => {
     const tally = new Map<string, number>();
@@ -258,16 +273,4 @@ function Chip({
 
 function isCategory(value: string): value is DealCategory | "all" {
   return value === "all" || CATEGORIES.includes(value as DealCategory);
-}
-
-function subscribe() {
-  return () => {};
-}
-
-function getToday() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getServerToday() {
-  return null;
 }
