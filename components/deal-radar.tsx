@@ -174,12 +174,12 @@ function DealCard({ deal, featured }: { deal: Deal; featured: boolean }) {
 
   return (
     <article
-      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-card-hover ${
-        highlighted ? "border-accent/50" : "border-line"
+      className={`deal-card flex h-full flex-col rounded-2xl border bg-card p-[7px] ${
+        highlighted ? "border-accent/50 hover:border-accent" : "border-line hover:border-foreground/40"
       }`}
     >
       <DealArtwork deal={deal} />
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col px-[5px] pb-[3px] pt-[9px]">
         <div className="flex items-start justify-between gap-3">
           <p className="text-[11px] uppercase tracking-[0.16em] text-faint">{deal.category}</p>
           {deal.sponsored ? (
@@ -192,14 +192,14 @@ function DealCard({ deal, featured }: { deal: Deal; featured: boolean }) {
             </span>
           ) : null}
         </div>
-        <h2 className="mt-3 font-serif text-[1.75rem] leading-none tracking-tight text-foreground">
+        <h2 className="mt-[3px] font-serif text-[1.75rem] leading-none tracking-tight text-foreground">
           {deal.title}
         </h2>
-        <p className="mt-2 text-sm text-muted">{deal.vendor}</p>
+        <p className="mt-1 text-sm text-muted">{deal.vendor}</p>
         {deal.tags.length > 0 ? (
-          <p className="mt-3 text-xs text-faint">{deal.tags.join(" · ")}</p>
+          <p className="mt-2 text-xs text-faint">{deal.tags.join(" · ")}</p>
         ) : null}
-        <div className="mt-auto flex items-end justify-between gap-4 pt-6">
+        <div className="mt-auto flex items-end justify-between gap-4 pt-4">
           <div>
             <p
               className={`font-serif text-3xl leading-none ${
@@ -233,9 +233,9 @@ function DealCard({ deal, featured }: { deal: Deal; featured: boolean }) {
             target="_blank"
             rel={deal.sponsored ? SPONSOR_LINK_REL : "noopener noreferrer"}
             aria-label={`Open ${deal.title} from ${deal.vendor}`}
-            className="shrink-0 rounded-full border border-line px-3 py-2 text-sm text-foreground transition-colors hover:border-accent hover:text-accent"
+            className="shrink-0 text-sm text-accent underline-offset-4 hover:underline"
           >
-            Open
+            Open ↗
           </a>
         </div>
       </div>
@@ -247,7 +247,7 @@ function DealArtwork({ deal }: { deal: Deal }) {
   const initial = deal.vendor.trim().charAt(0).toUpperCase() || "S";
 
   return (
-    <div className="relative aspect-[4/3] bg-background">
+    <div className="relative aspect-[4/3] overflow-hidden rounded-[10px] bg-background">
       {deal.image ? (
         <Image
           src={deal.image}

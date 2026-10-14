@@ -49,3 +49,34 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+.deal-card {
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+
+.deal-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 22px 48px -16px rgba(0, 0, 0, 0.85);
+}
+
+.deal-card img {
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.deal-card:hover img {
+  transform: scale(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-card,
+  .deal-card img {
+    transition: none;
+  }
+
+  .deal-card:hover,
+  .deal-card:hover img {
+    transform: none;
+  }
+}
