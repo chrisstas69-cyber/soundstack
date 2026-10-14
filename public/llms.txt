@@ -9,13 +9,14 @@ The canonical origin below is the default. If you deploy to another domain, set 
 ## Pages
 
 - [Deal radar](https://soundstack.vercel.app/): searchable homepage with category filter chips for VST Plugins, Free Synth Presets, and Underground Sample Packs
+- [Advertise](https://soundstack.vercel.app/advertise): founding sponsor offer. $79 for the first 5 sponsors, then $149. Each rate is 7 days pinned at #1 plus the next newsletter. The audience is music producers hunting plugin deals.
 - [Sitemap](https://soundstack.vercel.app/sitemap.xml): public URL index
 - [Robots](https://soundstack.vercel.app/robots.txt): crawler rules
 
 ## Actions
 
 - Newsletter: POST https://soundstack.vercel.app/api/newsletter with JSON `{"email":"producer@example.com"}`. The address is added to a Resend audience (`RESEND_API_KEY`, `RESEND_AUDIENCE_ID`).
-- Sponsorship: the header CTA "Feature Your Plugin / Pack ($149)" opens `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` when that env var is an https URL.
+- Sponsorship: when `NEXT_PUBLIC_STRIPE_FOUNDING_LINK` is an https URL, the header CTA "Feature Your Plugin ($79 founding, reg. $149)" opens it. Otherwise the header falls back to "Feature Your Plugin / Pack ($149)" on `NEXT_PUBLIC_STRIPE_FULL_LINK`. `/advertise` lists both prices and both checkout buttons. `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is the legacy link and currently points at the founding checkout.
 - Stripe webhook: POST https://soundstack.vercel.app/api/stripe/webhook. Verifies `STRIPE_WEBHOOK_SECRET`. A paid `checkout.session.completed` stores the sponsor in a private Vercel Blob (`BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN`), emails `OWNER_ALERT_EMAIL`, and the homepage pins that listing, labeled Sponsored, for 7 days (`featuredUntil` = paid date + 7, shown while that date is still in the future). The Payment Link needs required custom fields `product_name` and `product_url`. Thank-you page: `/?sponsored=1`.
 - Newsletter sponsors: GET https://soundstack.vercel.app/api/sponsors/active with `Authorization: Bearer $ADMIN_TOKEN` returns active sponsors not yet included. POST `{ "ids": ["cs_..."] }` marks them included.
 

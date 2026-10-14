@@ -18,7 +18,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The radar, search, and category chips work without env vars. The sponsor button stays hidden until `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is an `https://` URL. Newsletter signup returns a clear error until the Resend variables are set.
+The radar, search, and category chips work without env vars. The sponsor button stays hidden until `NEXT_PUBLIC_STRIPE_FOUNDING_LINK`, `NEXT_PUBLIC_STRIPE_FULL_LINK`, or `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is an `https://` URL. Newsletter signup returns a clear error until the Resend variables are set.
 
 ## Environment variables
 
@@ -27,10 +27,12 @@ The radar, search, and category chips work without env vars. The sponsor button 
 | `NEXT_PUBLIC_SITE_URL` | For correct metadata | Canonical origin for Open Graph, sitemap, robots, and JSON-LD. Inlined at build time. |
 | `RESEND_API_KEY` | For newsletter and sponsor email | Resend API key used by `POST /api/newsletter` and the sponsor alerts. |
 | `RESEND_AUDIENCE_ID` | For newsletter | Audience id. If Resend rejects the legacy audience call, the route retries with the same id as a segment. |
-| `OWNER_ALERT_EMAIL` | For the owner alert | Inbox for `You made $149 from <Sponsor>` after a paid checkout. With the default from address, Resend only delivers to the account email, so use that address here until `RESEND_FROM` is verified. |
+| `OWNER_ALERT_EMAIL` | For the owner alert | Inbox for `You made $79 from <Sponsor>` after a paid checkout. The dollar amount is the Checkout Session total, so a $149 payment says $149. With the default from address, Resend only delivers to the account email, so use that address here until `RESEND_FROM` is verified. |
 | `RESEND_FROM` | Optional | From address for sponsor emails. Defaults to `onboarding@resend.dev`. Set a verified domain address (for example `SoundStack <alerts@yourdomain.com>`) so the buyer confirmation can leave the Resend sandbox. |
 | `ADMIN_TOKEN` | For the sponsor API | Bearer token for `GET` and `POST /api/sponsors/active`. |
-| `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` | For the sponsor CTA | Stripe Payment Link. The header link is omitted when this is empty. |
+| `NEXT_PUBLIC_STRIPE_FOUNDING_LINK` | For the $79 CTA | Stripe Payment Link for the first 5 sponsors ($79, 7 days). When this is an https URL, the header reads **Feature Your Plugin ($79 founding, reg. $149)**. |
+| `NEXT_PUBLIC_STRIPE_FULL_LINK` | For the $149 CTA | Stripe Payment Link for the standard rate ($149, 7 days). The header uses this when the founding link is unset. |
+| `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` | Legacy | Currently the founding checkout. The header uses it only when neither link above is an https URL. |
 | `STRIPE_WEBHOOK_SECRET` | For the webhook | Verifies `POST /api/stripe/webhook`. |
 | `STRIPE_SECRET_KEY` | Optional | Not used. Signature checks and sponsor persistence both use the webhook payload. |
 | `BLOB_STORE_ID` | For sponsor persistence on Vercel | Private [Vercel Blob](https://vercel.com/docs/vercel-blob) store id. Connecting the store to the project sets this and `VERCEL_OIDC_TOKEN` (issued automatically; do not copy it into the repo). |
@@ -68,7 +70,9 @@ Append an object to the array in `data/deals.json`. Keep ids unique. Dates are `
 
 ## Sponsorship
 
-The header CTA reads **Feature Your Plugin / Pack ($149)** and opens the Stripe Payment Link.
+The header CTA reads **Feature Your Plugin ($79 founding, reg. $149)** and opens `NEXT_PUBLIC_STRIPE_FOUNDING_LINK`. When that variable is unset, the header falls back to **Feature Your Plugin / Pack ($149)** and `NEXT_PUBLIC_STRIPE_FULL_LINK`.
+
+`/advertise` explains the offer: 7 days pinned at #1, plus the next newsletter, for music producers hunting plugin deals. It shows both prices and a button for each Payment Link. The founding rate is the first 5 sponsors.
 
 A verified `checkout.session.completed` (and `checkout.session.async_payment_succeeded`) with `payment_status: paid` writes the sponsor to a private Vercel Blob at `sponsors/featured.json`. The write is idempotent on the Checkout Session id: a retry keeps `includedInNewsletter` and does not send the emails again.
 
@@ -76,7 +80,7 @@ The stored record has the product name, https URL, buyer email, amount in the sm
 
 Active sponsors are ordered by `paidAt`, earliest payment in the #1 slot. A second payment for the same URL does not add another card; the listing stays up through the later `featuredUntil`. The card is labeled **Sponsored** and the outbound link uses `rel="sponsored noopener"`. The sponsorship fee is not shown as the product price. When the URL matches a row already in `data/deals.json`, that row is pinned instead of adding a second card. Expired sponsors stay in the blob and drop off the radar.
 
-After the write, Resend emails `OWNER_ALERT_EMAIL` with the subject `You made $149 from <Sponsor>` and sends the buyer a short confirmation. The from address is `RESEND_FROM` or `onboarding@resend.dev`. If the owner alert cannot be sent, the webhook returns 500 so Stripe retries; the listing is already stored. A buyer-mail failure is logged and does not fail the webhook.
+After the write, Resend emails `OWNER_ALERT_EMAIL` with the subject `You made $79 from <Sponsor>` (or `$149` when that is what the Checkout Session charged) and sends the buyer a confirmation that names the same amount. Neither email hard-codes $149. The from address is `RESEND_FROM` or `onboarding@resend.dev`. If the owner alert cannot be sent, the webhook returns 500 so Stripe retries; the listing is already stored. A buyer-mail failure is logged and does not fail the webhook.
 
 Point the Payment Link's confirmation redirect at `https://<your-domain>/?sponsored=1`. That URL shows a thank-you banner. Search and category changes keep the `sponsored` query so the banner stays up.
 
@@ -86,7 +90,7 @@ Blob is used instead of Global Config (formerly Edge Config) because each checko
 
 The static header link cannot pass a different name and URL for each buyer. Collect them on the Payment Link.
 
-In the Stripe Dashboard, edit the Payment Link used by `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` and add two **required** text custom fields:
+In the Stripe Dashboard, edit each Payment Link (`NEXT_PUBLIC_STRIPE_FOUNDING_LINK`, `NEXT_PUBLIC_STRIPE_FULL_LINK`, and the legacy `NEXT_PUBLIC_STRIPE_PAYMENT_LINK`) and add two **required** text custom fields:
 
 | Label | Key | Buyer enters |
 | --- | --- | --- |

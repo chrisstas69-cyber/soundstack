@@ -1,21 +1,27 @@
 import { siteName } from "@/lib/site";
 
-export function Header({ sponsorHref }: { sponsorHref: string | null }) {
+export function Header({
+  sponsor,
+  homeHref = "#radar",
+}: {
+  sponsor: { href: string; label: string } | null;
+  homeHref?: string;
+}) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-ink/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
-        <a href="#radar" className="flex items-center gap-2.5">
+        <a href={homeHref} className="flex items-center gap-2.5">
           <Mark />
           <span className="text-[15px] font-medium tracking-tight">{siteName}</span>
         </a>
-        {sponsorHref ? (
+        {sponsor ? (
           <a
-            href={sponsorHref}
+            href={sponsor.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 rounded-full bg-signal px-3.5 py-2 text-center text-[13px] font-medium leading-tight text-ink transition-colors hover:bg-[#ff7a5e]"
+            className="max-w-40 shrink rounded-full bg-signal px-3.5 py-2 text-center text-[13px] font-medium leading-tight text-ink transition-colors hover:bg-[#ff7a5e] sm:max-w-none"
           >
-            Feature Your Plugin / Pack ($149)
+            {sponsor.label}
           </a>
         ) : null}
       </div>

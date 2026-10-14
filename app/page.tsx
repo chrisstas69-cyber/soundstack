@@ -5,7 +5,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { SponsorThanks } from "@/components/sponsor-thanks";
 import { formatIsoDate, getDeals, latestAddedAt } from "@/lib/deals";
 import { buildJsonLd, serializeJsonLd } from "@/lib/jsonld";
-import { siteName, sponsorHref } from "@/lib/site";
+import { headerSponsorCta, siteName } from "@/lib/site";
 import { Suspense } from "react";
 
 export default function HomePage() {
@@ -19,7 +19,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd }}
       />
-      <Header sponsorHref={sponsorHref()} />
+      <Header sponsor={headerSponsorCta()} />
       <Suspense fallback={null}>
         <SponsorThanks />
       </Suspense>
@@ -60,6 +60,9 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-mute sm:flex-row sm:items-center sm:justify-between">
           <p>{siteName}. Prices checked against vendor pages.</p>
           <nav className="flex gap-4">
+            <a href="/advertise" className="hover:text-bone">
+              Advertise
+            </a>
             <a href="/llms.txt" className="hover:text-bone">
               llms.txt
             </a>

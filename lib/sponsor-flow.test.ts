@@ -4,9 +4,12 @@ import Stripe from "stripe";
 import { GET, POST as markIncluded } from "@/app/api/sponsors/active/route";
 import { POST as webhook } from "@/app/api/stripe/webhook/route";
 import {
+  formatCheckoutAmount,
   setSponsorMailerForTests,
+  sponsorEmailDrafts,
   type SponsorEmail,
 } from "@/lib/sponsor-mail";
+import { headerSponsorCtaFromLinks } from "@/lib/site";
 import {
   isSponsorStoreConfigured,
   listSponsors,
@@ -197,8 +200,10 @@ test("signed webhook stores one sponsor and sends both emails once", async () =>
   assert.equal(sent[0].to, "owner@example.com");
   assert.equal(sent[0].from, "SoundStack <onboarding@resend.dev>");
   assert.equal(sent[0].subject, "You made $149 from Tape Stop");
+  assert.match(sent[0].text, /You made \$149 from Tape Stop/);
   assert.equal(sent[1].to, "buyer@example.com");
-  assert.match(sent[1].subject, /confirmed/i);
+  assert.equal(sent[1].subject, "Your $149 SoundStack sponsorship is confirmed");
+  assert.match(sent[1].text, /Payment received: \$149/);
   assert.match(sent[1].text, /7 days/);
 
   const replay = await postWebhook(checkoutEvent());
@@ -207,6 +212,92 @@ test("signed webhook stores one sponsor and sends both emails once", async () =>
   assert.equal(replayBody.idempotent, true);
   assert.equal((await listSponsors()).length, 1);
   assert.equal(sent.length, 2);
+});
+
+test("emails use the Checkout Session amount, including a $79 founding payment", () => {
+  const founding = sampleSponsor({
+    id: "cs_test_founding",
+    name: "Tape Stop",
+    url: "https://example.com/tape-stop",
+    paidAt: "2026-10-14",
+    featuredUntil: "2026-10-21",
+    amountTotal: 7900,
+    currency: "usd",
+  });
+  const drafts = sponsorEmailDrafts(
+    founding,
+    "SoundStack <alerts@example.com>",
+    "owner@example.com",
+  );
+
+  assert.equal(drafts[0].subject, "You made $79 from Tape Stop");
+  assert.match(drafts[0].text, /You made \$79 from Tape Stop/);
+  assert.equal(drafts[0].text.includes("$149"), false);
+  assert.equal(drafts[1].subject, "Your $79 SoundStack sponsorship is confirmed");
+  assert.match(drafts[1].text, /Payment received: \$79/);
+  assert.equal(drafts[1].text.includes("$149"), false);
+
+  const cents = sampleSponsor({
+    ...founding,
+    amountTotal: 7950,
+  });
+  const odd = sponsorEmailDrafts(cents, "from@example.com", "owner@example.com");
+  assert.equal(formatCheckoutAmount(7950, "usd"), "$79.50");
+  assert.equal(odd[0].subject, "You made $79.50 from Tape Stop");
+
+  const missing = sampleSponsor({
+    ...founding,
+    amountTotal: null,
+  });
+  const blank = sponsorEmailDrafts(missing, "from@example.com", "owner@example.com");
+  assert.equal(blank[0].subject, "New SoundStack sponsor: Tape Stop");
+  assert.equal(blank[0].subject.includes("$149"), false);
+  assert.equal(blank[1].subject, "Your SoundStack sponsorship is confirmed");
+  assert.equal(blank[1].text.includes("$149"), false);
+});
+
+test("header CTA prefers the founding link and falls back to $149", () => {
+  assert.deepEqual(
+    headerSponsorCtaFromLinks({
+      founding: " https://buy.stripe.com/founding ",
+      full: "https://buy.stripe.com/full",
+      payment: "https://buy.stripe.com/legacy",
+    }),
+    {
+      href: "https://buy.stripe.com/founding",
+      label: "Feature Your Plugin ($79 founding, reg. $149)",
+    },
+  );
+
+  assert.deepEqual(
+    headerSponsorCtaFromLinks({
+      founding: "",
+      full: "https://buy.stripe.com/full",
+      payment: "https://buy.stripe.com/legacy",
+    }),
+    {
+      href: "https://buy.stripe.com/full",
+      label: "Feature Your Plugin / Pack ($149)",
+    },
+  );
+
+  assert.deepEqual(
+    headerSponsorCtaFromLinks({
+      payment: "https://buy.stripe.com/legacy",
+    }),
+    {
+      href: "https://buy.stripe.com/legacy",
+      label: "Feature Your Plugin / Pack ($149)",
+    },
+  );
+
+  assert.equal(
+    headerSponsorCtaFromLinks({
+      founding: "http://buy.stripe.com/founding",
+      full: "not-a-url",
+    }),
+    null,
+  );
 });
 
 test("a bad signature does not store a sponsor", async () => {

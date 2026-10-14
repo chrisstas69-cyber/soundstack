@@ -4,7 +4,6 @@ import { Resend } from "resend";
 export const DEFAULT_RESEND_FROM = "onboarding@resend.dev";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SPONSOR_PRICE_LABEL = "$149";
 
 export type SponsorEmail = {
   from: string;
@@ -36,8 +35,27 @@ export function resendFromAddress(): string {
   return configured || DEFAULT_RESEND_FROM;
 }
 
-export function ownerAlertSubject(sponsorName: string): string {
-  return `You made ${SPONSOR_PRICE_LABEL} from ${sponsorName}`;
+export function ownerAlertSubject(sponsorName: string, amountLabel: string): string {
+  return `You made ${amountLabel} from ${sponsorName}`;
+}
+
+/** Checkout Session `amount_total` in major units. Whole dollars omit cents. */
+export function formatCheckoutAmount(
+  amount: number | null,
+  currency: string | null,
+): string | null {
+  if (typeof amount !== "number" || !Number.isFinite(amount)) return null;
+  const code = (currency ?? "usd").toUpperCase();
+  if (code === "USD" || code === "EUR" || code === "GBP") {
+    const hasCents = amount % 100 !== 0;
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: hasCents ? 2 : 0,
+    }).format(amount / 100);
+  }
+  return `${amount} ${code}`;
 }
 
 export function sponsorEmailDrafts(
@@ -116,10 +134,14 @@ async function deliver(apiKey: string, email: SponsorEmail): Promise<void> {
 }
 
 function ownerDraft(sponsor: Sponsor, from: string, owner: string): SponsorEmail {
-  const amount = formatCharge(sponsor.amountTotal, sponsor.currency);
+  const paid = formatCheckoutAmount(sponsor.amountTotal, sponsor.currency);
+  const amount = paid ?? "unknown";
   const buyer = sponsor.email ?? "not collected";
+  const headline = paid
+    ? `You made ${paid} from ${sponsor.name}.`
+    : `New SoundStack sponsor: ${sponsor.name}.`;
   const text = [
-    `You made ${SPONSOR_PRICE_LABEL} from ${sponsor.name}.`,
+    headline,
     "",
     `Name: ${sponsor.name}`,
     `URL: ${sponsor.url}`,
@@ -131,7 +153,7 @@ function ownerDraft(sponsor: Sponsor, from: string, owner: string): SponsorEmail
   ].join("\n");
 
   const html = [
-    `<p>You made ${SPONSOR_PRICE_LABEL} from ${escapeHtml(sponsor.name)}.</p>`,
+    `<p>${escapeHtml(headline)}</p>`,
     "<ul>",
     `<li>Name: ${escapeHtml(sponsor.name)}</li>`,
     `<li>URL: <a href="${escapeHtml(sponsor.url)}">${escapeHtml(sponsor.url)}</a></li>`,
@@ -146,7 +168,9 @@ function ownerDraft(sponsor: Sponsor, from: string, owner: string): SponsorEmail
   return {
     from,
     to: owner,
-    subject: ownerAlertSubject(sponsor.name),
+    subject: paid
+      ? ownerAlertSubject(sponsor.name, paid)
+      : `New SoundStack sponsor: ${sponsor.name}`,
     text,
     html,
     idempotencyKey: idempotencyKey("sponsor-owner-alert", sponsor.id),
@@ -154,8 +178,11 @@ function ownerDraft(sponsor: Sponsor, from: string, owner: string): SponsorEmail
 }
 
 function buyerDraft(sponsor: Sponsor, from: string, buyer: string): SponsorEmail {
+  const paid = formatCheckoutAmount(sponsor.amountTotal, sponsor.currency);
   const lastDay = addUtcDaysIso(sponsor.featuredUntil, -1);
+  const received = paid ? `Payment received: ${paid}.` : "Payment received.";
   const text = [
+    received,
     `${sponsor.name} is featured on SoundStack for 7 days.`,
     "",
     sponsor.url,
@@ -164,6 +191,7 @@ function buyerDraft(sponsor: Sponsor, from: string, buyer: string): SponsorEmail
   ].join("\n");
 
   const html = [
+    `<p>${escapeHtml(received)}</p>`,
     `<p>${escapeHtml(sponsor.name)} is featured on SoundStack for 7 days.</p>`,
     `<p><a href="${escapeHtml(sponsor.url)}">${escapeHtml(sponsor.url)}</a></p>`,
     `<p>The listing stays in the featured slot through ${escapeHtml(lastDay)} UTC and drops off on ${escapeHtml(sponsor.featuredUntil)}.</p>`,
@@ -172,23 +200,13 @@ function buyerDraft(sponsor: Sponsor, from: string, buyer: string): SponsorEmail
   return {
     from,
     to: buyer,
-    subject: "Your SoundStack sponsorship is confirmed",
+    subject: paid
+      ? `Your ${paid} SoundStack sponsorship is confirmed`
+      : "Your SoundStack sponsorship is confirmed",
     text,
     html,
     idempotencyKey: idempotencyKey("sponsor-buyer-confirmation", sponsor.id),
   };
-}
-
-function formatCharge(amount: number | null, currency: string | null): string {
-  if (amount == null) return "unknown";
-  const code = (currency ?? "usd").toUpperCase();
-  if (code === "USD" || code === "EUR" || code === "GBP") {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: code,
-    }).format(amount / 100);
-  }
-  return `${amount} ${code}`;
 }
 
 function addUtcDaysIso(isoDate: string, days: number): string {
