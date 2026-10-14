@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { siteDescription, siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
@@ -58,7 +59,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans text-bone">{children}</body>
+      <body className="min-h-full font-sans text-bone">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
