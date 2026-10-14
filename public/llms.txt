@@ -16,7 +16,7 @@ The canonical origin below is the default. If you deploy to another domain, set 
 
 - Newsletter: POST https://soundstack.vercel.app/api/newsletter with JSON `{"email":"producer@example.com"}`. The address is added to a Resend audience (`RESEND_API_KEY`, `RESEND_AUDIENCE_ID`).
 - Sponsorship: the header CTA "Feature Your Plugin / Pack ($149)" opens `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` when that env var is an https URL.
-- Stripe webhook: POST https://soundstack.vercel.app/api/stripe/webhook. Verifies `STRIPE_WEBHOOK_SECRET` and logs `checkout.session.completed`. Persistence is still a TODO.
+- Stripe webhook: POST https://soundstack.vercel.app/api/stripe/webhook. Verifies `STRIPE_WEBHOOK_SECRET`. A paid `checkout.session.completed` stores the sponsor in a private Vercel Blob (`BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN`) and the homepage pins that listing, with a Featured badge, for 30 days. The Payment Link needs required custom fields `pluginname` and `pluginurl`.
 
 ## Data
 
