@@ -1,0 +1,26 @@
+# SoundStack
+
+> Curated deal radar for music producers: daily audio plugin sales, free synth presets, and boutique soundware.
+
+SoundStack keeps a short, checked list of VST plugin offers, free Serum / Vital / Diva preset packs, and underground sample packs. Prices are copied from vendor pages. A discount is shown only when the vendor publishes a compare-at price. Unverified numbers are omitted or labeled.
+
+The canonical origin below is the default. If you deploy to another domain, set NEXT_PUBLIC_SITE_URL and update the absolute links in this file.
+
+## Pages
+
+- [Deal radar](https://soundstack.vercel.app/): searchable homepage with category filter chips for VST Plugins, Free Synth Presets, and Underground Sample Packs
+- [Sitemap](https://soundstack.vercel.app/sitemap.xml): public URL index
+- [Robots](https://soundstack.vercel.app/robots.txt): crawler rules
+
+## Actions
+
+- Newsletter: POST https://soundstack.vercel.app/api/newsletter with JSON `{"email":"producer@example.com"}`. The address is added to a Resend audience (`RESEND_API_KEY`, `RESEND_AUDIENCE_ID`).
+- Sponsorship: the header CTA "Feature Your Plugin / Pack ($149)" opens `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` when that env var is an https URL.
+- Stripe webhook: POST https://soundstack.vercel.app/api/stripe/webhook. Verifies `STRIPE_WEBHOOK_SECRET` and logs `checkout.session.completed`. Persistence is still a TODO.
+
+## Data
+
+Deals live in `data/deals.json`. A daily job can append an object. Required fields: id, title, vendor, category, url, price, originalPrice, discount, isFree, tags, addedAt, expiresAt, featured, featuredUntil. Optional: currency (USD, EUR, GBP), priceStatus (list, sale, free, omitted), priceNote.
+
+Categories are exactly: VST Plugins, Free Synth Presets, Underground Sample Packs.
+Dates are YYYY-MM-DD. Use null when a price, discount, or expiry is unknown. Do not invent a sale price.
