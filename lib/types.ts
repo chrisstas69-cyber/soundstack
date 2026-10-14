@@ -38,6 +38,8 @@ export type Deal = {
   expiresAt: string | null;
   featured: boolean;
   featuredUntil: string | null;
+  /** Paid placement from a Checkout Session. The outbound link is sponsored. */
+  sponsored?: boolean;
   currency?: DealCurrency | null;
   priceStatus?: PriceStatus;
   priceNote?: string;

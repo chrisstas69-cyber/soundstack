@@ -5,6 +5,7 @@ import {
   isFeaturedActive,
   priceStatusOf,
 } from "@/lib/deals";
+import { SPONSOR_LINK_REL } from "@/lib/sponsors";
 import { CATEGORIES, type Deal, type DealCategory } from "@/lib/types";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -23,6 +24,7 @@ export function DealRadar({
       today={today}
       initialQuery={params.get("q") ?? ""}
       initialCategory={params.get("category") ?? "all"}
+      keepSponsoredThankYou={params.get("sponsored") === "1"}
     />
   );
 }
@@ -34,6 +36,7 @@ export function DealRadarFallback({ deals }: { deals: Deal[] }) {
       today={null}
       initialQuery=""
       initialCategory="all"
+      keepSponsoredThankYou={false}
     />
   );
 }
@@ -43,11 +46,13 @@ function DealRadarView({
   today,
   initialQuery,
   initialCategory,
+  keepSponsoredThankYou,
 }: {
   deals: Deal[];
   today: string | null;
   initialQuery: string;
   initialCategory: string;
+  keepSponsoredThankYou: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState<string>(
@@ -80,6 +85,7 @@ function DealRadarView({
     const search = new URLSearchParams();
     if (nextQuery.trim()) search.set("q", nextQuery);
     if (nextCategory !== "all") search.set("category", nextCategory);
+    if (keepSponsoredThankYou) search.set("sponsored", "1");
     const href = search.size ? `/?${search.toString()}` : "/";
     window.history.replaceState(null, "", href);
   }
@@ -160,7 +166,11 @@ function DealRow({ deal, featured }: { deal: Deal; featured: boolean }) {
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">
             {deal.category}
           </span>
-          {featured ? (
+          {deal.sponsored ? (
+            <span className="rounded-full bg-signal-soft px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
+              Sponsored
+            </span>
+          ) : featured ? (
             <span className="rounded-full bg-signal-soft px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
               Featured
             </span>
@@ -192,7 +202,7 @@ function DealRow({ deal, featured }: { deal: Deal; featured: boolean }) {
       <a
         href={deal.url}
         target="_blank"
-        rel="noopener noreferrer"
+        rel={deal.sponsored ? SPONSOR_LINK_REL : "noopener noreferrer"}
         aria-label={`Open ${deal.title} from ${deal.vendor}`}
         className="inline-flex h-10 items-center justify-center rounded-full border border-line px-4 text-sm text-bone transition-colors hover:border-bone/40 hover:bg-white/5 md:justify-self-end"
       >

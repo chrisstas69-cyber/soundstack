@@ -1,4 +1,9 @@
-import { isSponsorStoreConfigured, saveSponsor } from "@/lib/sponsor-store";
+import { sendSponsorEmails } from "@/lib/sponsor-mail";
+import {
+  isSponsorStoreConfigured,
+  markSponsorAlerts,
+  saveSponsor,
+} from "@/lib/sponsor-store";
 import { sponsorFromCheckout } from "@/lib/sponsors";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -10,7 +15,7 @@ import Stripe from "stripe";
 const WEBHOOK_CLIENT_KEY = "sk_test_webhook_signature_only";
 
 const MISSING_LISTING =
-  'Paid checkout has no plugin name and https URL. On the Payment Link, add required custom fields pluginname and pluginurl (labels "Plugin or pack name" and "Plugin or pack URL"). Metadata pluginname/pluginurl or client_reference_id "Name|https://..." also works.';
+  'Paid checkout has no product name and https URL. On the Payment Link, add required custom fields product_name and product_url. pluginname/pluginurl, metadata, or client_reference_id "Name|https://..." also work.';
 
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
@@ -77,8 +82,10 @@ export async function POST(request: Request) {
     );
   }
 
+  let sponsor;
   try {
-    await saveSponsor(parsed.sponsor);
+    const saved = await saveSponsor(parsed.sponsor);
+    sponsor = saved.sponsor;
   } catch (error) {
     console.error("[soundstack] could not persist sponsor", session.id, error);
     return NextResponse.json(
@@ -87,16 +94,78 @@ export async function POST(request: Request) {
     );
   }
 
+  const needsOwner = !sponsor.ownerAlertSent;
+  const needsBuyer = Boolean(sponsor.email) && !sponsor.buyerAlertSent;
+  if (!needsOwner && !needsBuyer) {
+    return NextResponse.json({
+      received: true,
+      featured: true,
+      featuredUntil: sponsor.featuredUntil,
+      idempotent: true,
+    });
+  }
+
+  let alerts;
+  try {
+    alerts = await sendSponsorEmails(sponsor);
+  } catch (error) {
+    console.error("[soundstack] sponsor email is not configured", sponsor.id, error);
+    return NextResponse.json(
+      {
+        error:
+          "Could not send sponsor email. Set RESEND_API_KEY and OWNER_ALERT_EMAIL.",
+        featured: true,
+        featuredUntil: sponsor.featuredUntil,
+      },
+      { status: 500 },
+    );
+  }
+
+  try {
+    await markSponsorAlerts(sponsor.id, {
+      ownerAlertSent: alerts.ownerSent,
+      buyerAlertSent: alerts.buyerSent && !alerts.buyerError,
+    });
+  } catch (error) {
+    console.error("[soundstack] could not record sponsor alerts", sponsor.id, error);
+    return NextResponse.json(
+      {
+        error: "Could not record sponsor alerts.",
+        featured: true,
+        featuredUntil: sponsor.featuredUntil,
+      },
+      { status: 500 },
+    );
+  }
+
+  if (alerts.ownerError) {
+    console.error("[soundstack] owner alert failed", sponsor.id, alerts.ownerError);
+    return NextResponse.json(
+      {
+        error: "Could not send the owner alert.",
+        featured: true,
+        featuredUntil: sponsor.featuredUntil,
+      },
+      { status: 500 },
+    );
+  }
+
+  if (alerts.buyerError) {
+    console.error("[soundstack] buyer confirmation failed", sponsor.id, alerts.buyerError);
+  }
+
   console.log("[soundstack] featured sponsor", {
-    id: parsed.sponsor.id,
-    name: parsed.sponsor.name,
-    url: parsed.sponsor.url,
-    featuredUntil: parsed.sponsor.featuredUntil,
+    id: sponsor.id,
+    name: sponsor.name,
+    url: sponsor.url,
+    featuredUntil: sponsor.featuredUntil,
   });
 
   return NextResponse.json({
     received: true,
     featured: true,
-    featuredUntil: parsed.sponsor.featuredUntil,
+    featuredUntil: sponsor.featuredUntil,
+    ownerAlerted: alerts.ownerSent,
+    buyerAlerted: Boolean(sponsor.email) && !alerts.buyerError,
   });
 }
