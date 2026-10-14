@@ -1,9 +1,8 @@
 import { adminTokenConfigured, isAdminAuthorized } from "@/lib/admin-auth";
 import { listSponsorsStrict, markSponsorsIncluded } from "@/lib/sponsor-store";
-import { sponsorsPendingNewsletter, type Sponsor } from "@/lib/sponsors";
+import { isSponsorId, sponsorsPendingNewsletter, type Sponsor } from "@/lib/sponsors";
 import { NextResponse } from "next/server";
 
-const SESSION_ID = /^cs_[A-Za-z0-9_]+$/;
 const MAX_IDS = 50;
 
 function utcToday(): string {
@@ -54,7 +53,7 @@ export async function POST(request: Request) {
   const ids = readIds(body);
   if (!ids) {
     return NextResponse.json(
-      { error: "Provide ids, an array of checkout session ids." },
+      { error: "Provide ids, an array of sponsor ids." },
       { status: 400 },
     );
   }
@@ -93,6 +92,6 @@ function readIds(body: unknown): string[] | null {
   if (!body || typeof body !== "object") return null;
   const ids = (body as { ids?: unknown }).ids;
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > MAX_IDS) return null;
-  if (!ids.every((id) => typeof id === "string" && SESSION_ID.test(id))) return null;
+  if (!ids.every((id) => typeof id === "string" && isSponsorId(id))) return null;
   return ids;
 }

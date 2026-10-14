@@ -2,14 +2,23 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import Stripe from "stripe";
 import { GET, POST as markIncluded } from "@/app/api/sponsors/active/route";
+import { POST as approveFree } from "@/app/api/sponsors/free/route";
+import { POST as requestFeature } from "@/app/api/sponsors/feature-request/route";
 import { POST as webhook } from "@/app/api/stripe/webhook/route";
+import { FEATURE_REQUEST_LIMIT, resetRateLimitForTests } from "@/lib/rate-limit";
 import {
   formatCheckoutAmount,
+  freeFeatureRequestDraft,
   setSponsorMailerForTests,
   sponsorEmailDrafts,
   type SponsorEmail,
 } from "@/lib/sponsor-mail";
-import { headerSponsorCtaFromLinks } from "@/lib/site";
+import {
+  headerSponsorCta,
+  headerSponsorCtaForMode,
+  headerSponsorCtaFromLinks,
+  sponsorModeFrom,
+} from "@/lib/site";
 import {
   isSponsorStoreConfigured,
   listSponsors,
@@ -17,7 +26,10 @@ import {
   saveSponsor,
 } from "@/lib/sponsor-store";
 import {
+  addUtcDays,
   mergeSponsorsIntoDeals,
+  parseSponsorStore,
+  serializeSponsorStore,
   SPONSOR_FEATURED_DAYS,
   SPONSOR_LINK_REL,
   sponsorFromCheckout,
@@ -41,6 +53,8 @@ beforeEach(() => {
   process.env.RESEND_FROM = "SoundStack <onboarding@resend.dev>";
   process.env.ADMIN_TOKEN = ADMIN;
   delete process.env.BLOB_READ_WRITE_TOKEN;
+  delete process.env.NEXT_PUBLIC_SPONSOR_MODE;
+  resetRateLimitForTests();
   setSponsorMailerForTests(async (email) => {
     sent.push(email);
   });
@@ -392,6 +406,310 @@ test("admin API reports that it is not configured", async () => {
   assert.equal(response.status, 503);
 });
 
+test("free mode is the default header CTA and paid mode restores Stripe", () => {
+  assert.equal(sponsorModeFrom(undefined), "free");
+  assert.equal(sponsorModeFrom("  "), "free");
+  assert.equal(sponsorModeFrom("nope"), "free");
+  assert.equal(sponsorModeFrom("PAID"), "paid");
+
+  assert.deepEqual(
+    headerSponsorCtaForMode("free", {
+      founding: "https://buy.stripe.com/founding",
+    }),
+    {
+      href: "/advertise",
+      label: "Get Your Plugin Featured (Free)",
+    },
+  );
+
+  assert.deepEqual(
+    headerSponsorCtaForMode("paid", {
+      founding: "https://buy.stripe.com/founding",
+    }),
+    {
+      href: "https://buy.stripe.com/founding",
+      label: "Feature Your Plugin ($79 founding, reg. $149)",
+    },
+  );
+
+  const previousMode = process.env.NEXT_PUBLIC_SPONSOR_MODE;
+  const previousFounding = process.env.NEXT_PUBLIC_STRIPE_FOUNDING_LINK;
+  process.env.NEXT_PUBLIC_STRIPE_FOUNDING_LINK = "https://buy.stripe.com/founding";
+  try {
+    delete process.env.NEXT_PUBLIC_SPONSOR_MODE;
+    assert.deepEqual(headerSponsorCta(), {
+      href: "/advertise",
+      label: "Get Your Plugin Featured (Free)",
+    });
+    process.env.NEXT_PUBLIC_SPONSOR_MODE = "paid";
+    assert.equal(
+      headerSponsorCta()?.href,
+      "https://buy.stripe.com/founding",
+    );
+  } finally {
+    restoreEnv("NEXT_PUBLIC_SPONSOR_MODE", previousMode);
+    restoreEnv("NEXT_PUBLIC_STRIPE_FOUNDING_LINK", previousFounding);
+  }
+});
+
+test("a zero-amount sponsor pins and is labeled featured, not sponsored", () => {
+  const curated = sampleDeal({
+    id: "tape",
+    title: "Shelf",
+    url: "https://example.com/tape-stop",
+  });
+  const free = sampleSponsor({
+    id: "free_tape",
+    name: "Tape Stop",
+    url: "https://example.com/tape-stop",
+    paidAt: "2026-10-01",
+    featuredUntil: "2026-10-08",
+    amountTotal: 0,
+    currency: "usd",
+  });
+
+  const pinned = mergeSponsorsIntoDeals([curated], [free], "2026-10-03");
+  assert.equal(pinned[0].id, "tape");
+  assert.equal(pinned[0].featured, true);
+  assert.equal(pinned[0].sponsored, undefined);
+  assert.equal(pinned[0].featuredUntil, "2026-10-08");
+
+  const created = mergeSponsorsIntoDeals([], [free], "2026-10-03");
+  assert.equal(created[0].sponsored, undefined);
+  assert.equal(created[0].featured, true);
+  assert.deepEqual(created[0].tags, ["featured"]);
+
+  const paidLater = sampleSponsor({
+    id: "cs_test_tape_paid",
+    name: "Tape Stop",
+    url: "https://example.com/tape-stop",
+    paidAt: "2026-10-02",
+    featuredUntil: "2026-10-09",
+  });
+  const both = mergeSponsorsIntoDeals([], [paidLater, free], "2026-10-03");
+  assert.equal(both.length, 1);
+  assert.equal(both[0].sponsored, true);
+  assert.equal(both[0].featuredUntil, "2026-10-09");
+
+  const roundTrip = parseSponsorStore(serializeSponsorStore([free]));
+  assert.equal(roundTrip.length, 1);
+  assert.equal(roundTrip[0].amountTotal, 0);
+  assert.equal(roundTrip[0].id, "free_tape");
+});
+
+test("free feature request emails the owner and drops honeypot and floods", async () => {
+  const sentBefore = sent.length;
+  const response = await requestFeature(
+    jsonRequest("/api/sponsors/feature-request", {
+      name: "Tape Stop",
+      url: "example.com/tape-stop",
+      email: "Maker@Example.com",
+      note: "We will share the listing.",
+      ss_hp: "",
+    }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(sent.length, sentBefore + 1);
+  assert.equal(sent[0].to, "owner@example.com");
+  assert.equal(sent[0].from, "SoundStack <onboarding@resend.dev>");
+  assert.equal(sent[0].subject, "New free feature request: Tape Stop");
+  assert.match(sent[0].text, /https:\/\/example.com\/tape-stop/);
+  assert.match(sent[0].text, /maker@example.com/);
+  assert.match(sent[0].text, /We will share the listing/);
+
+  const honeypot = await requestFeature(
+    jsonRequest("/api/sponsors/feature-request", {
+      name: "",
+      ss_hp: "https://spam.example",
+    }),
+  );
+  assert.equal(honeypot.status, 200);
+  assert.equal(sent.length, 1);
+
+  const missing = await requestFeature(
+    jsonRequest("/api/sponsors/feature-request", {
+      name: "Tape Stop",
+      url: "https://example.com/tape-stop",
+      email: "maker@example.com",
+      note: "   ",
+    }),
+  );
+  assert.equal(missing.status, 400);
+  assert.equal(sent.length, 1);
+
+  delete process.env.RESEND_FROM;
+  const fallback = await requestFeature(
+    jsonRequest("/api/sponsors/feature-request", {
+      name: "Other Plugin",
+      url: "https://example.com/other",
+      email: "maker@example.com",
+      note: "Sharing it.",
+    }),
+  );
+  assert.equal(fallback.status, 200);
+  assert.equal(sent[1].from, "onboarding@resend.dev");
+  assert.equal(sent[1].subject, "New free feature request: Other Plugin");
+
+  const draft = freeFeatureRequestDraft({
+    name: "Tape Stop",
+    url: "https://example.com/tape-stop",
+    email: "maker@example.com",
+    note: "Hello",
+    from: "onboarding@resend.dev",
+    owner: "owner@example.com",
+  });
+  assert.equal(draft.subject, "New free feature request: Tape Stop");
+
+  delete process.env.RESEND_API_KEY;
+  const unconfigured = await requestFeature(
+    jsonRequest("/api/sponsors/feature-request", {
+      name: "Quiet",
+      url: "https://example.com/quiet",
+      email: "maker@example.com",
+      note: "Still sharing.",
+    }),
+  );
+  assert.equal(unconfigured.status, 503);
+  assert.equal(sent.length, 2);
+});
+
+test("feature requests are rate limited per address", async () => {
+  const init = {
+    headers: { "x-forwarded-for": "203.0.113.10, 10.0.0.1" },
+  };
+  for (let index = 0; index < FEATURE_REQUEST_LIMIT; index += 1) {
+    const response = await requestFeature(
+      jsonRequest(
+        "/api/sponsors/feature-request",
+        {
+          name: `Plugin ${index}`,
+          url: `https://example.com/plugin-${index}`,
+          email: "maker@example.com",
+          note: "We will share the listing.",
+        },
+        init,
+      ),
+    );
+    assert.equal(response.status, 200);
+  }
+  assert.equal(sent.length, FEATURE_REQUEST_LIMIT);
+
+  const blocked = await requestFeature(
+    jsonRequest(
+      "/api/sponsors/feature-request",
+      {
+        name: "One more",
+        url: "https://example.com/one-more",
+        email: "maker@example.com",
+        note: "We will share the listing.",
+      },
+      init,
+    ),
+  );
+  assert.equal(blocked.status, 429);
+  assert.equal(sent.length, FEATURE_REQUEST_LIMIT);
+  assert.ok(Number(blocked.headers.get("retry-after")) > 0);
+});
+
+test("admin approval stores a complimentary sponsor in the same blob", async () => {
+  const anonymous = await approveFree(
+    jsonRequest("/api/sponsors/free", {
+      name: "Tape Stop",
+      url: "https://example.com/tape-stop",
+      email: "maker@example.com",
+    }),
+  );
+  assert.equal(anonymous.status, 401);
+
+  const approved = await approveFree(
+    adminRequest("/api/sponsors/free", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Tape Stop",
+        url: "example.com/tape-stop",
+        email: "Maker@Example.com",
+      }),
+    }),
+  );
+  assert.equal(approved.status, 200);
+  const body = await approved.json();
+  assert.equal(body.sponsor.name, "Tape Stop");
+  assert.equal(body.sponsor.url, "https://example.com/tape-stop");
+  assert.equal(body.sponsor.email, "maker@example.com");
+  assert.equal(body.sponsor.amount, 0);
+  assert.equal(body.sponsor.days, 7);
+  assert.match(body.sponsor.id, /^free_[a-f0-9]+$/);
+  assert.equal(body.sponsor.featuredUntil, addUtcDays(body.sponsor.paidAt, 7));
+
+  const stored = await listSponsors();
+  const pinned = mergeSponsorsIntoDeals([], stored, stored[0].paidAt);
+  assert.equal(pinned[0].sponsored, undefined);
+  assert.equal(pinned[0].featured, true);
+
+  const listed = await GET(adminRequest("/api/sponsors/active"));
+  const listedBody = await listed.json();
+  assert.equal(listedBody.sponsors.length, 1);
+  assert.equal(listedBody.sponsors[0].amount, 0);
+
+  const marked = await markIncluded(
+    adminRequest("/api/sponsors/active", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ids: [body.sponsor.id] }),
+    }),
+  );
+  assert.equal(marked.status, 200);
+  assert.deepEqual((await marked.json()).included, [body.sponsor.id]);
+
+  const custom = await approveFree(
+    adminRequest("/api/sponsors/free", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Short Run",
+        url: "https://example.com/short",
+        email: "maker@example.com",
+        days: 3,
+      }),
+    }),
+  );
+  const customBody = await custom.json();
+  assert.equal(custom.status, 200);
+  assert.equal(customBody.sponsor.featuredUntil, addUtcDays(customBody.sponsor.paidAt, 3));
+
+  const badDays = await approveFree(
+    adminRequest("/api/sponsors/free", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Nope",
+        url: "https://example.com/nope",
+        email: "maker@example.com",
+        days: 0,
+      }),
+    }),
+  );
+  assert.equal(badDays.status, 400);
+
+  delete process.env.ADMIN_TOKEN;
+  const unconfigured = await approveFree(
+    new Request("http://localhost/api/sponsors/free", {
+      method: "POST",
+      headers: {
+        authorization: "Bearer anything",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Nope",
+        url: "https://example.com/nope",
+        email: "maker@example.com",
+      }),
+    }),
+  );
+  assert.equal(unconfigured.status, 503);
+});
+
 function writeNodeEnv(value: string | undefined) {
   const env = process.env as Record<string, string | undefined>;
   if (value === undefined) delete env.NODE_ENV;
@@ -453,6 +771,26 @@ async function postWebhook(event: unknown, secret = SECRET) {
       body: payload,
     }),
   );
+}
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+
+function jsonRequest(
+  path: string,
+  body: unknown,
+  init?: { headers?: Record<string, string> },
+) {
+  return new Request(`http://localhost${path}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...init?.headers,
+    },
+    body: JSON.stringify(body),
+  });
 }
 
 function adminRequest(path: string, init?: RequestInit) {

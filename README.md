@@ -18,18 +18,19 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The radar, search, and category chips work without env vars. The sponsor button stays hidden until `NEXT_PUBLIC_STRIPE_FOUNDING_LINK`, `NEXT_PUBLIC_STRIPE_FULL_LINK`, or `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is an `https://` URL. Newsletter signup returns a clear error until the Resend variables are set.
+The radar, search, and category chips work without env vars. Sponsorship defaults to free mode: the header links to `/advertise`. Set `NEXT_PUBLIC_SPONSOR_MODE=paid` and rebuild to use the Stripe Payment Links. In paid mode the sponsor button stays hidden until `NEXT_PUBLIC_STRIPE_FOUNDING_LINK`, `NEXT_PUBLIC_STRIPE_FULL_LINK`, or `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is an `https://` URL. Newsletter signup returns a clear error until the Resend variables are set. The free feature form returns a clear error until `RESEND_API_KEY` and `OWNER_ALERT_EMAIL` are set.
 
 ## Environment variables
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | For correct metadata | Canonical origin for Open Graph, sitemap, robots, and JSON-LD. Inlined at build time. |
-| `RESEND_API_KEY` | For newsletter and sponsor email | Resend API key used by `POST /api/newsletter` and the sponsor alerts. |
+| `RESEND_API_KEY` | For newsletter and sponsor email | Resend API key used by `POST /api/newsletter`, the sponsor alerts, and free feature requests. |
 | `RESEND_AUDIENCE_ID` | For newsletter | Audience id. If Resend rejects the legacy audience call, the route retries with the same id as a segment. |
-| `OWNER_ALERT_EMAIL` | For the owner alert | Inbox for `You made $79 from <Sponsor>` after a paid checkout. The dollar amount is the Checkout Session total, so a $149 payment says $149. With the default from address, Resend only delivers to the account email, so use that address here until `RESEND_FROM` is verified. |
-| `RESEND_FROM` | Optional | From address for sponsor emails. Defaults to `onboarding@resend.dev`. Set a verified domain address (for example `SoundStack <alerts@yourdomain.com>`) so the buyer confirmation can leave the Resend sandbox. |
-| `ADMIN_TOKEN` | For the sponsor API | Bearer token for `GET` and `POST /api/sponsors/active`. |
+| `OWNER_ALERT_EMAIL` | For the owner alert | Inbox for `You made $79 from <Sponsor>` after a paid checkout, and for `New free feature request: <name>` from the free form. The dollar amount is the Checkout Session total, so a $149 payment says $149. With the default from address, Resend only delivers to the account email, so use that address here until `RESEND_FROM` is verified. |
+| `RESEND_FROM` | Optional | From address for sponsor emails and free feature requests. Defaults to `onboarding@resend.dev`. Set a verified domain address (for example `SoundStack <alerts@yourdomain.com>`) so the buyer confirmation can leave the Resend sandbox. |
+| `ADMIN_TOKEN` | For the sponsor API | Bearer token for `GET` and `POST /api/sponsors/active`, and for `POST /api/sponsors/free`. |
+| `NEXT_PUBLIC_SPONSOR_MODE` | Optional | `free` (default when unset) or `paid`. Free mode shows **Get Your Plugin Featured (Free)** and the request form. `paid` restores the Stripe CTAs. Inlined at build time. |
 | `NEXT_PUBLIC_STRIPE_FOUNDING_LINK` | For the $79 CTA | Stripe Payment Link for the first 5 sponsors ($79, 7 days). When this is an https URL, the header reads **Feature Your Plugin ($79 founding, reg. $149)**. |
 | `NEXT_PUBLIC_STRIPE_FULL_LINK` | For the $149 CTA | Stripe Payment Link for the standard rate ($149, 7 days). The header uses this when the founding link is unset. |
 | `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` | Legacy | Currently the founding checkout. The header uses it only when neither link above is an https URL. |
@@ -70,6 +71,33 @@ Append an object to the array in `data/deals.json`. Keep ids unique. Dates are `
 
 ## Sponsorship
 
+`NEXT_PUBLIC_SPONSOR_MODE` chooses the public offer. `free` is the default when the variable is unset. `paid` restores the Stripe checkout below. The value is inlined at build time, so change it and rebuild to switch.
+
+### Free mode
+
+The header CTA reads **Get Your Plugin Featured (Free)** and goes to `/advertise`. Stripe buttons are hidden. The Payment Link helpers, webhook, and blob writer stay in the repo, so `paid` mode brings today's checkout back without another code change.
+
+`/advertise` explains the early-partner offer: 7 days pinned, a newsletter mention, and we ask only that they share the listing. The page says paid slots at $149/week are coming later.
+
+The form collects a product name, product URL, contact email, and a short note. `POST /api/sponsors/feature-request` emails `OWNER_ALERT_EMAIL` through Resend. The from address is `RESEND_FROM`, or `onboarding@resend.dev` when that is unset. The subject is `New free feature request: <name>`.
+
+Spam protection is a honeypot field named `ss_hp` plus an in-memory limit of 5 requests per hour per IP. A filled honeypot returns success and does not send mail. The limit lives in the server process, so it is per instance.
+
+The form does not publish the listing. To approve one:
+
+```bash
+curl -X POST https://<your-domain>/api/sponsors/free \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Tape Stop","url":"https://example.com/tape-stop","email":"maker@example.com","days":7}'
+```
+
+`days` defaults to 7 and must be a whole number from 1 to 90. The route writes the same private blob as a paid checkout (`sponsors/featured.json`) with `amountTotal: 0` and an id that starts with `free_`. The homepage pins it in paid order for that window. The card is labeled **Featured** when the amount is 0, and **Sponsored** when the amount is anything else. The outbound link uses `rel="sponsored noopener"` only for a paid amount.
+
+Without `ADMIN_TOKEN` the route returns 503. A missing or wrong bearer token returns 401.
+
+### Paid mode
+
 The header CTA reads **Feature Your Plugin ($79 founding, reg. $149)** and opens `NEXT_PUBLIC_STRIPE_FOUNDING_LINK`. When that variable is unset, the header falls back to **Feature Your Plugin / Pack ($149)** and `NEXT_PUBLIC_STRIPE_FULL_LINK`.
 
 `/advertise` explains the offer: 7 days pinned at #1, plus the next newsletter, for music producers hunting plugin deals. It shows both prices and a button for each Payment Link. The founding rate is the first 5 sponsors.
@@ -78,7 +106,7 @@ A verified `checkout.session.completed` (and `checkout.session.async_payment_suc
 
 The stored record has the product name, https URL, buyer email, amount in the smallest currency unit (`amountTotal`, so `14900` for $149), `paidAt`, `featuredUntil` (`paidAt` plus 7 days), and `includedInNewsletter: false`. The homepage reads that document on each request and pins every active sponsor at the top of the radar. A sponsor is active while `featuredUntil` is still in the future (UTC), so a checkout on 14 Oct is shown on the 14th through the 20th and drops off on the 21st. No redeploy is required.
 
-Active sponsors are ordered by `paidAt`, earliest payment in the #1 slot. A second payment for the same URL does not add another card; the listing stays up through the later `featuredUntil`. The card is labeled **Sponsored** and the outbound link uses `rel="sponsored noopener"`. The sponsorship fee is not shown as the product price. When the URL matches a row already in `data/deals.json`, that row is pinned instead of adding a second card. Expired sponsors stay in the blob and drop off the radar.
+Active sponsors are ordered by `paidAt`, earliest payment in the #1 slot. A second payment for the same URL does not add another card; the listing stays up through the later `featuredUntil`. A paid card is labeled **Sponsored** and the outbound link uses `rel="sponsored noopener"`. A row with `amountTotal: 0` is labeled **Featured** and uses a normal outbound link. The sponsorship fee is not shown as the product price. When the URL matches a row already in `data/deals.json`, that row is pinned instead of adding a second card. Expired sponsors stay in the blob and drop off the radar.
 
 After the write, Resend emails `OWNER_ALERT_EMAIL` with the subject `You made $79 from <Sponsor>` (or `$149` when that is what the Checkout Session charged) and sends the buyer a confirmation that names the same amount. Neither email hard-codes $149. The from address is `RESEND_FROM` or `onboarding@resend.dev`. If the owner alert cannot be sent, the webhook returns 500 so Stripe retries; the listing is already stored. A buyer-mail failure is logged and does not fail the webhook.
 
@@ -130,7 +158,7 @@ If you create Checkout Sessions in code instead of a Payment Link, send the same
 }
 ```
 
-`amount` is Stripe `amount_total` in the smallest currency unit. `POST` the same path with `{ "ids": ["cs_test_..."] }` to set `includedInNewsletter` on those sessions. Marking an id again is a no-op. The response lists `included` and `missing`. Without `ADMIN_TOKEN` the route returns 503. A missing or wrong bearer token returns 401. Responses send `Cache-Control: no-store`.
+`amount` is Stripe `amount_total` in the smallest currency unit, or `0` for a complimentary feature. `POST` the same path with `{ "ids": ["cs_test_..."] }` to set `includedInNewsletter` on those sessions. Complimentary ids start with `free_` and are accepted by the same call. Marking an id again is a no-op. The response lists `included` and `missing`. Without `ADMIN_TOKEN` the route returns 503. A missing or wrong bearer token returns 401. Responses send `Cache-Control: no-store`.
 
 ## Discoverability
 

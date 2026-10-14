@@ -16,18 +16,27 @@ export function Header({
           <Mark />
           <span className="text-[15px] font-medium tracking-tight">{siteName}</span>
         </HomeLink>
-        {sponsor ? (
-          <a
-            href={sponsor.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="max-w-40 shrink rounded-full bg-signal px-3.5 py-2 text-center text-[13px] font-medium leading-tight text-ink transition-colors hover:bg-[#ff7a5e] sm:max-w-none"
-          >
-            {sponsor.label}
-          </a>
-        ) : null}
+        {sponsor ? <SponsorCta href={sponsor.href} label={sponsor.label} /> : null}
       </div>
     </header>
+  );
+}
+
+const ctaClass =
+  "max-w-40 shrink rounded-full bg-signal px-3.5 py-2 text-center text-[13px] font-medium leading-tight text-ink transition-colors hover:bg-[#ff7a5e] sm:max-w-none";
+
+function SponsorCta({ href, label }: { href: string; label: string }) {
+  if (href.startsWith("/")) {
+    return (
+      <Link href={href} className={ctaClass}>
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={ctaClass}>
+      {label}
+    </a>
   );
 }
 

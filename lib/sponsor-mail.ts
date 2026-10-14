@@ -1,4 +1,5 @@
 import type { Sponsor } from "@/lib/sponsors";
+import { createHash } from "node:crypto";
 import { Resend } from "resend";
 
 export const DEFAULT_RESEND_FROM = "onboarding@resend.dev";
@@ -68,6 +69,72 @@ export function sponsorEmailDrafts(
   ];
   if (sponsor.email) drafts.push(buyerDraft(sponsor, from, sponsor.email));
   return drafts;
+}
+
+export function freeFeatureRequestDraft(input: {
+  name: string;
+  url: string;
+  email: string;
+  note: string;
+  from: string;
+  owner: string;
+}): SponsorEmail {
+  const subject = `New free feature request: ${input.name}`;
+  const text = [
+    subject,
+    "",
+    `Name: ${input.name}`,
+    `URL: ${input.url}`,
+    `Email: ${input.email}`,
+    `Note: ${input.note}`,
+  ].join("\n");
+  const noteHtml = escapeHtml(input.note).replaceAll("\n", "<br>");
+  const html = [
+    `<p>${escapeHtml(subject)}</p>`,
+    "<ul>",
+    `<li>Name: ${escapeHtml(input.name)}</li>`,
+    `<li>URL: <a href="${escapeHtml(input.url)}">${escapeHtml(input.url)}</a></li>`,
+    `<li>Email: ${escapeHtml(input.email)}</li>`,
+    `<li>Note: ${noteHtml}</li>`,
+    "</ul>",
+  ].join("");
+  const digest = createHash("sha256")
+    .update(`${input.name}\n${input.url}\n${input.email}\n${input.note}`)
+    .digest("hex")
+    .slice(0, 40);
+
+  return {
+    from: input.from,
+    to: input.owner,
+    subject,
+    text,
+    html,
+    idempotencyKey: `free-feature-request/${digest}`,
+  };
+}
+
+export async function sendFreeFeatureRequest(request: {
+  name: string;
+  url: string;
+  email: string;
+  note: string;
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY?.trim() ?? "";
+  const owner = process.env.OWNER_ALERT_EMAIL?.trim().toLowerCase() ?? "";
+  if (!apiKey || !owner || !EMAIL_PATTERN.test(owner)) {
+    throw new Error(
+      "Feature requests are not configured. Set RESEND_API_KEY and OWNER_ALERT_EMAIL.",
+    );
+  }
+
+  await deliver(
+    apiKey,
+    freeFeatureRequestDraft({
+      ...request,
+      from: resendFromAddress(),
+      owner,
+    }),
+  );
 }
 
 export async function sendSponsorEmails(

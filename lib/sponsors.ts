@@ -9,8 +9,14 @@ import { CATEGORIES } from "@/lib/types";
  */
 export const SPONSOR_FEATURED_DAYS = 7;
 
-/** Outbound rel for a paid placement. */
+/** Longest complimentary window an admin approval can set. */
+export const FREE_FEATURE_MAX_DAYS = 90;
+
+/** Outbound rel for a paid placement. Complimentary features omit it. */
 export const SPONSOR_LINK_REL = "sponsored noopener";
+
+const SESSION_ID = /^cs_[A-Za-z0-9_]+$/;
+const FREE_SPONSOR_ID = /^free_[A-Za-z0-9_]+$/;
 
 const NAME_KEYS = new Set([
   "pluginname",
@@ -126,6 +132,69 @@ export function sponsorFromCheckout(
   };
 }
 
+/**
+ * Admin approval for a complimentary feature. Amount is 0 so the radar
+ * labels the row Featured and still pins it for `days` (default 7).
+ */
+export function sponsorFromFreeApproval(input: {
+  id: string;
+  name: string;
+  url: string;
+  email: string;
+  days: number;
+  today: string;
+}): { ok: true; sponsor: Sponsor } | { ok: false; error: string } {
+  if (!isFreeSponsorId(input.id)) {
+    return { ok: false, error: "Could not store that feature." };
+  }
+  if (!isIsoDate(input.today)) {
+    return { ok: false, error: "Could not store that feature." };
+  }
+
+  const name = cleanName(input.name);
+  if (!name) {
+    return { ok: false, error: "Enter a product name up to 120 characters." };
+  }
+  const url = cleanHttpsUrl(input.url);
+  if (!url) {
+    return { ok: false, error: "Enter a public https product URL." };
+  }
+  const email = cleanEmail(input.email);
+  if (!email) {
+    return { ok: false, error: "Enter a valid contact email." };
+  }
+  if (!isFeatureDayCount(input.days)) {
+    return {
+      ok: false,
+      error: `days must be a whole number from 1 to ${FREE_FEATURE_MAX_DAYS}.`,
+    };
+  }
+
+  return {
+    ok: true,
+    sponsor: {
+      id: input.id,
+      email,
+      amountTotal: 0,
+      currency: "usd",
+      name,
+      url,
+      vendor: vendorFromUrl(url),
+      category: "VST Plugins",
+      paidAt: input.today,
+      featuredUntil: addUtcDays(input.today, input.days),
+      includedInNewsletter: false,
+      ownerAlertSent: false,
+      buyerAlertSent: false,
+    },
+  };
+}
+
+/** True when the placement was complimentary. The radar labels these Featured. */
+export function isComplimentarySponsor(sponsor: Sponsor): boolean {
+  return sponsor.amountTotal === 0;
+}
+
 export function mergeSponsorsIntoDeals(
   deals: Deal[],
   sponsors: Sponsor[],
@@ -144,13 +213,14 @@ export function mergeSponsorsIntoDeals(
     if (existingPin) {
       const openEnded = existingPin.featured && !existingPin.featuredUntil;
       if (!openEnded) extendFeaturedUntil(existingPin, sponsor.featuredUntil);
+      markPaidPlacement(existingPin, sponsor);
       continue;
     }
 
     const index = copies.findIndex((deal) => normalizeUrlKey(deal.url) === key);
     if (index >= 0) {
       const deal = copies[index];
-      pinExistingDeal(deal, sponsor.featuredUntil);
+      pinExistingDeal(deal, sponsor);
       pinned.push(deal);
       pinnedByUrl.set(key, deal);
       copies.splice(index, 1);
@@ -170,7 +240,7 @@ export function sponsorToDeal(sponsor: Sponsor): Deal | null {
   const stored = sanitizeSponsor(sponsor);
   if (!stored) return null;
 
-  return {
+  const deal: Deal = {
     id: `sponsor-${stored.id}`,
     title: stored.name,
     vendor: stored.vendor,
@@ -180,15 +250,16 @@ export function sponsorToDeal(sponsor: Sponsor): Deal | null {
     originalPrice: null,
     discount: null,
     isFree: false,
-    tags: ["sponsor"],
+    tags: isComplimentarySponsor(stored) ? ["featured"] : ["sponsor"],
     addedAt: stored.paidAt,
     expiresAt: null,
     featured: true,
     featuredUntil: stored.featuredUntil,
-    sponsored: true,
     priceStatus: "omitted",
     priceNote: "Featured placement. The price is on the vendor page.",
   };
+  markPaidPlacement(deal, stored);
+  return deal;
 }
 
 export function parseSponsorStore(text: string): Sponsor[] {
@@ -278,12 +349,17 @@ function comparePaidOrder(a: Sponsor, b: Sponsor): number {
   return a.id.localeCompare(b.id);
 }
 
-function pinExistingDeal(deal: Deal, featuredUntil: string): void {
+function pinExistingDeal(deal: Deal, sponsor: Sponsor): void {
   const openEnded = deal.featured && !deal.featuredUntil;
   deal.featured = true;
-  deal.sponsored = true;
+  markPaidPlacement(deal, sponsor);
   if (openEnded) return;
-  extendFeaturedUntil(deal, featuredUntil);
+  extendFeaturedUntil(deal, sponsor.featuredUntil);
+}
+
+/** Amount 0 stays unlabeled so the card reads Featured, not Sponsored. */
+function markPaidPlacement(deal: Deal, sponsor: Sponsor): void {
+  if (!isComplimentarySponsor(sponsor)) deal.sponsored = true;
 }
 
 function extendFeaturedUntil(deal: Deal, featuredUntil: string): void {
@@ -406,7 +482,7 @@ function compactKey(key: string): string {
   return key.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function cleanName(value: string): string | null {
+export function cleanName(value: string): string | null {
   const cleaned = value.replace(/[\u0000-\u001F\u007F]/g, "").replace(/\s+/g, " ").trim();
   if (cleaned.length < 1 || cleaned.length > 120) return null;
   return cleaned;
@@ -456,7 +532,7 @@ function cleanCategory(value: string): DealCategory {
   return match ?? "VST Plugins";
 }
 
-function cleanEmail(value: string | null | undefined): string | null {
+export function cleanEmail(value: string | null | undefined): string | null {
   if (!value) return null;
   const email = value.trim().toLowerCase();
   if (email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -483,7 +559,20 @@ function paidAtFromUnix(created: number): string {
 }
 
 function isSessionId(id: string): boolean {
-  return /^cs_[A-Za-z0-9_]+$/.test(id);
+  return SESSION_ID.test(id);
+}
+
+function isFreeSponsorId(id: string): boolean {
+  return FREE_SPONSOR_ID.test(id);
+}
+
+/** Checkout session ids and complimentary `free_` ids stored in the blob. */
+export function isSponsorId(id: string): boolean {
+  return isSessionId(id) || isFreeSponsorId(id);
+}
+
+export function isFeatureDayCount(days: number): boolean {
+  return Number.isInteger(days) && days >= 1 && days <= FREE_FEATURE_MAX_DAYS;
 }
 
 function sponsorRows(parsed: unknown): unknown[] | null {
@@ -496,7 +585,7 @@ function sponsorRows(parsed: unknown): unknown[] | null {
 export function sanitizeSponsor(value: unknown): Sponsor | null {
   if (!value || typeof value !== "object") return null;
   const row = value as Partial<Sponsor> & { amount?: number | null };
-  if (typeof row.id !== "string" || !isSessionId(row.id)) return null;
+  if (typeof row.id !== "string" || !isSponsorId(row.id)) return null;
   if (typeof row.name !== "string" || typeof row.url !== "string") return null;
   if (typeof row.paidAt !== "string" || typeof row.featuredUntil !== "string") {
     return null;
