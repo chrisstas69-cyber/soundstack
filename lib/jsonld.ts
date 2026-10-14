@@ -54,6 +54,10 @@ function productNode(deal: Deal) {
     },
   };
 
+  if (deal.image) {
+    node.image = deal.image.startsWith("http") ? deal.image : `${siteUrl}${deal.image}`;
+  }
+
   if (status !== "omitted" && deal.price != null && deal.currency) {
     node.offers = {
       "@type": "Offer",

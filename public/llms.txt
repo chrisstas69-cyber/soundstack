@@ -9,6 +9,7 @@ The canonical origin below is the default. If you deploy to another domain, set 
 ## Pages
 
 - [Deal radar](https://soundstack.vercel.app/): searchable homepage with category filter chips for VST Plugins, Free Synth Presets, and Underground Sample Packs
+- [About](https://soundstack.vercel.app/about): how prices are chosen, and the difference between Featured and Sponsored cards
 - [Advertise](https://soundstack.vercel.app/advertise): free early-partner features by default (`NEXT_PUBLIC_SPONSOR_MODE` unset or `free`). 7 days pinned, a newsletter mention, and the only ask is that they share the listing. The page has a request form and says paid slots at $149/week are coming later. Set the mode to `paid` to show the $79 founding offer and the $149 checkout instead.
 - [Sitemap](https://soundstack.vercel.app/sitemap.xml): public URL index
 - [Robots](https://soundstack.vercel.app/robots.txt): crawler rules
@@ -24,7 +25,7 @@ The canonical origin below is the default. If you deploy to another domain, set 
 
 ## Data
 
-Deals live in `data/deals.json`. A daily job can append an object. Required fields: id, title, vendor, category, url, price, originalPrice, discount, isFree, tags, addedAt, expiresAt, featured, featuredUntil. Optional: currency (USD, EUR, GBP), priceStatus (list, sale, free, omitted), priceNote.
+Deals live in `data/deals.json`. A daily job can append an object. Required fields: id, title, vendor, category, url, price, originalPrice, discount, isFree, tags, addedAt, expiresAt, featured, featuredUntil. Optional: currency (USD, EUR, GBP), priceStatus (list, sale, free, omitted), priceNote, image (a path under /deals), imageSource (the vendor URL that file was downloaded from, usually og:image).
 
 Categories are exactly: VST Plugins, Free Synth Presets, Underground Sample Packs.
 Dates are YYYY-MM-DD. Use null when a price, discount, or expiry is unknown. Do not invent a sale price.

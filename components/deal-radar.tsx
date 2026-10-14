@@ -1,14 +1,13 @@
 "use client";
 
-import {
-  formatMoney,
-  isFeaturedActive,
-  priceStatusOf,
-} from "@/lib/deals";
+import { formatMoney, isFeaturedActive, priceStatusOf } from "@/lib/deals";
 import { SPONSOR_LINK_REL } from "@/lib/sponsors";
 import { CATEGORIES, type Deal, type DealCategory } from "@/lib/types";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+
+type Filter = "all" | DealCategory;
 
 export function DealRadar({
   deals,
@@ -55,31 +54,31 @@ function DealRadarView({
   keepSponsoredThankYou: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery);
-  const [category, setCategory] = useState<string>(
-    isCategory(initialCategory) ? initialCategory : "all",
+  const [category, setCategory] = useState<Filter>(
+    isFilter(initialCategory) ? initialCategory : "all",
   );
 
   const counts = useMemo(() => {
-    const tally = new Map<string, number>();
-    for (const deal of deals) {
-      tally.set(deal.category, (tally.get(deal.category) ?? 0) + 1);
+    const tally = new Map<Filter, number>([["all", deals.length]]);
+    for (const name of CATEGORIES) {
+      tally.set(name, deals.filter((deal) => deal.category === name).length);
     }
     return tally;
   }, [deals]);
 
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return deals.filter((deal) => {
       if (category !== "all" && deal.category !== category) return false;
-      if (!needle) return true;
+      if (terms.length === 0) return true;
       const haystack = [deal.title, deal.vendor, deal.category, ...deal.tags]
         .join(" ")
         .toLowerCase();
-      return haystack.includes(needle);
+      return terms.every((term) => haystack.includes(term));
     });
   }, [category, deals, query]);
 
-  function update(nextQuery: string, nextCategory: string) {
+  function update(nextQuery: string, nextCategory: Filter) {
     setQuery(nextQuery);
     setCategory(nextCategory);
     const search = new URLSearchParams();
@@ -90,197 +89,203 @@ function DealRadarView({
     window.history.replaceState(null, "", href);
   }
 
+  const chips: Filter[] = ["all", ...CATEGORIES];
+
   return (
-    <section id="radar" className="mx-auto max-w-6xl px-5 pb-16">
-      <div className="flex flex-col gap-4 border-b border-line pb-5">
-        <label className="sr-only" htmlFor="deal-search">
-          Search deals
+    <section id="listings" className="scroll-mt-24">
+      <div className="flex flex-col gap-4">
+        <label htmlFor="deal-search" className="text-xs uppercase tracking-[0.16em] text-faint">
+          Search the list
         </label>
         <input
           id="deal-search"
           type="search"
           value={query}
-          placeholder="Search titles, vendors, tags"
           onChange={(event) => update(event.target.value, category)}
-          className="h-12 w-full rounded-full border border-line bg-panel px-5 text-base text-bone outline-none placeholder:text-mute"
+          placeholder="Search Serum, Valhalla, 808…"
+          className="h-12 w-full rounded-full border border-line bg-card px-5 text-base text-foreground outline-none placeholder:text-faint focus-visible:border-accent"
         />
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-label="Filter by category"
-        >
-          <Chip
-            pressed={category === "all"}
-            onClick={() => update(query, "all")}
-            label="All"
-            count={deals.length}
-          />
-          {CATEGORIES.map((name) => (
-            <Chip
-              key={name}
-              pressed={category === name}
-              onClick={() => update(query, name)}
-              label={name}
-              count={counts.get(name) ?? 0}
-            />
-          ))}
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Categories">
+          {chips.map((chip) => {
+            const selected = chip === category;
+            const label = chip === "all" ? "All" : chip;
+            return (
+              <button
+                key={chip}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => update(query, chip)}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                  selected
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-line text-muted hover:border-foreground/40 hover:text-foreground"
+                }`}
+              >
+                {label}
+                <span className={selected ? "text-background/70" : "text-faint"}>
+                  {" "}
+                  {counts.get(chip) ?? 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <p className="font-mono text-xs tracking-wide text-mute">
-          {visible.length} of {deals.length}
+        <p role="status" aria-live="polite" className="text-sm text-muted">
+          {visible.length} {visible.length === 1 ? "listing" : "listings"}
         </p>
       </div>
 
       {visible.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-lg">Nothing matches that filter.</p>
+        <div className="mt-10 max-w-md">
+          <p className="text-lg text-muted">
+            Nothing matches that. Try a vendor, a synth name, or another category.
+          </p>
           <button
             type="button"
             onClick={() => update("", "all")}
-            className="mt-4 text-sm text-signal underline-offset-4 hover:underline"
+            className="mt-4 text-sm text-accent underline-offset-4 hover:underline"
           >
             Clear search and category
           </button>
         </div>
       ) : (
-        <ul className="divide-y divide-line">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((deal) => (
-            <DealRow
+            <DealCard
               key={deal.id}
               deal={deal}
               featured={isFeaturedActive(deal, today)}
             />
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );
 }
 
-function DealRow({ deal, featured }: { deal: Deal; featured: boolean }) {
+function DealCard({ deal, featured }: { deal: Deal; featured: boolean }) {
   const status = priceStatusOf(deal);
+  const price = status === "free" ? "Free" : deal.price == null ? null : formatMoney(deal.price, deal.currency);
+  const original =
+    status === "sale" && deal.originalPrice != null
+      ? formatMoney(deal.originalPrice, deal.currency)
+      : null;
+  const highlighted = Boolean(deal.sponsored) || featured;
 
   return (
-    <li className="grid gap-4 py-5 md:grid-cols-[minmax(0,1fr)_11rem_5.5rem] md:items-center">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">
-            {deal.category}
-          </span>
+    <article
+      className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-card-hover ${
+        highlighted ? "border-accent/50" : "border-line"
+      }`}
+    >
+      <DealArtwork deal={deal} />
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-faint">{deal.category}</p>
           {deal.sponsored ? (
-            <span className="rounded-full bg-signal-soft px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
+            <span className="rounded-full bg-sale px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-accent-ink">
               Sponsored
             </span>
           ) : featured ? (
-            <span className="rounded-full bg-signal-soft px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
+            <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-accent-ink">
               Featured
             </span>
           ) : null}
         </div>
-        <h2 className="mt-1 truncate text-lg font-medium tracking-tight">
+        <h2 className="mt-3 font-serif text-[1.75rem] leading-none tracking-tight text-foreground">
           {deal.title}
         </h2>
-        <p className="text-sm text-mute">{deal.vendor}</p>
-        <ul className="mt-2 flex flex-wrap gap-1.5">
-          {deal.tags.slice(0, 4).map((tag) => (
-            <li
-              key={tag}
-              className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-mute"
+        <p className="mt-2 text-sm text-muted">{deal.vendor}</p>
+        {deal.tags.length > 0 ? (
+          <p className="mt-3 text-xs text-faint">{deal.tags.join(" · ")}</p>
+        ) : null}
+        <div className="mt-auto flex items-end justify-between gap-4 pt-6">
+          <div>
+            <p
+              className={`font-serif text-3xl leading-none ${
+                status === "free"
+                  ? "text-free"
+                  : status === "sale"
+                    ? "text-sale"
+                    : status === "omitted" || deal.price == null
+                      ? "text-faint"
+                      : "text-foreground"
+              }`}
             >
-              {tag}
-            </li>
-          ))}
-        </ul>
+              {price ?? "—"}
+            </p>
+            <p className="mt-2 text-xs text-faint">
+              {original ? <span className="mr-2 line-through">{original}</span> : null}
+              {status === "sale" && deal.discount ? (
+                <span className="mr-2 text-sale">{deal.discount} off</span>
+              ) : null}
+              {priceCaption(status)}
+            </p>
+            {deal.expiresAt ? (
+              <p className="mt-1 text-xs text-faint">Through {formatCardDay(deal.expiresAt)}</p>
+            ) : null}
+            {deal.priceNote ? (
+              <p className="mt-2 max-w-[16rem] text-xs leading-5 text-faint">{deal.priceNote}</p>
+            ) : null}
+          </div>
+          <a
+            href={deal.url}
+            target="_blank"
+            rel={deal.sponsored ? SPONSOR_LINK_REL : "noopener noreferrer"}
+            aria-label={`Open ${deal.title} from ${deal.vendor}`}
+            className="shrink-0 rounded-full border border-line px-3 py-2 text-sm text-foreground transition-colors hover:border-accent hover:text-accent"
+          >
+            Open
+          </a>
+        </div>
       </div>
-
-      <div title={deal.priceNote} className="md:text-right">
-        <Price deal={deal} status={status} />
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
-          {statusLabel(status)}
-        </p>
-      </div>
-
-      <a
-        href={deal.url}
-        target="_blank"
-        rel={deal.sponsored ? SPONSOR_LINK_REL : "noopener noreferrer"}
-        aria-label={`Open ${deal.title} from ${deal.vendor}`}
-        className="inline-flex h-10 items-center justify-center rounded-full border border-line px-4 text-sm text-bone transition-colors hover:border-bone/40 hover:bg-white/5 md:justify-self-end"
-      >
-        Open
-      </a>
-    </li>
+    </article>
   );
 }
 
-function Price({
-  deal,
-  status,
-}: {
-  deal: Deal;
-  status: ReturnType<typeof priceStatusOf>;
-}) {
-  if (status === "free") {
-    return <p className="font-mono text-lg text-bone">Free</p>;
-  }
-
-  if (status === "omitted" || deal.price == null) {
-    return <p className="font-mono text-lg text-mute">See vendor</p>;
-  }
+function DealArtwork({ deal }: { deal: Deal }) {
+  const initial = deal.vendor.trim().charAt(0).toUpperCase() || "S";
 
   return (
-    <p className="flex flex-wrap items-baseline gap-2 md:justify-end">
-      <span className="font-mono text-lg tabular-nums">
-        {formatMoney(deal.price, deal.currency)}
-      </span>
-      {status === "sale" && deal.originalPrice != null ? (
-        <span className="font-mono text-sm tabular-nums text-mute line-through">
-          {formatMoney(deal.originalPrice, deal.currency)}
-        </span>
-      ) : null}
-      {status === "sale" && deal.discount ? (
-        <span className="font-mono text-xs text-signal">−{deal.discount}</span>
-      ) : null}
-    </p>
+    <div className="relative aspect-[4/3] bg-background">
+      {deal.image ? (
+        <Image
+          src={deal.image}
+          alt={`${deal.title} by ${deal.vendor}`}
+          fill
+          sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+          className="object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <span aria-hidden="true" className="font-serif text-7xl leading-none text-faint">
+            {initial}
+          </span>
+          <span className="sr-only">{deal.vendor}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
-function statusLabel(status: ReturnType<typeof priceStatusOf>): string {
-  if (status === "sale") return "Sale";
+function priceCaption(status: ReturnType<typeof priceStatusOf>): string {
   if (status === "free") return "Free";
-  if (status === "list") return "List price";
-  return "Unverified";
+  if (status === "omitted") return "Price not listed";
+  if (status === "sale") return "Verified sale";
+  return "Verified list price";
 }
 
-function Chip({
-  pressed,
-  onClick,
-  label,
-  count,
-}: {
-  pressed: boolean;
-  onClick: () => void;
-  label: string;
-  count: number;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-        pressed
-          ? "border-bone bg-bone text-ink"
-          : "border-line text-bone hover:border-bone/40"
-      }`}
-    >
-      {label}
-      <span className={`ml-1.5 font-mono text-xs ${pressed ? "text-ink/60" : "text-mute"}`}>
-        {count}
-      </span>
-    </button>
-  );
+function formatCardDay(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  if (!year || !month || !day) return iso;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-function isCategory(value: string): value is DealCategory | "all" {
+function isFilter(value: string): value is Filter {
   return value === "all" || CATEGORIES.includes(value as DealCategory);
 }

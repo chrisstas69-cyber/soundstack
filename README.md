@@ -61,13 +61,17 @@ Append an object to the array in `data/deals.json`. Keep ids unique. Dates are `
   "featuredUntil": null,
   "currency": "USD",
   "priceStatus": "sale",
-  "priceNote": "Where the numbers were checked."
+  "priceNote": "Where the numbers were checked.",
+  "image": "/deals/example-pack.jpg",
+  "imageSource": "https://example.com/og-image.jpg"
 }
 ```
 
 `category` must be one of `VST Plugins`, `Free Synth Presets`, or `Underground Sample Packs`.
 
 `priceStatus` is `list`, `sale`, `free`, or `omitted`. Do not invent a markdown. Paid preset packs from boutique labels are filed under Underground Sample Packs and tagged `presets`, because Free Synth Presets is only for verified free packs.
+
+`image` is an optional cover or box shot in `public/deals/`. `imageSource` records the vendor URL it came from, usually the product page `og:image`. A card with no image shows the vendor's initial.
 
 ## Sponsorship
 

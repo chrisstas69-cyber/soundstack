@@ -20,6 +20,19 @@ function assertDeals(rows: Deal[]): Deal[] {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(deal.addedAt)) {
       throw new Error(`addedAt must be YYYY-MM-DD on ${deal.id}`);
     }
+    if (
+      deal.image != null &&
+      (typeof deal.image !== "string" ||
+        !/^\/deals\/[a-z0-9-]+\.(?:jpg|jpeg|png|webp|gif|avif)$/.test(deal.image))
+    ) {
+      throw new Error(`image must be a /deals file path on ${deal.id}`);
+    }
+    if (
+      deal.imageSource != null &&
+      (typeof deal.imageSource !== "string" || !deal.imageSource.startsWith("https://"))
+    ) {
+      throw new Error(`imageSource must be an https URL on ${deal.id}`);
+    }
   }
 
   return rows;
@@ -59,6 +72,17 @@ const MONTHS = [
   "Nov",
   "Dec",
 ];
+
+/** Short month and day, matching the original radar date label. */
+export function formatDay(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  if (!year || !month || !day) return iso;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
 
 export function formatIsoDate(iso: string): string {
   const [year, month, day] = iso.split("-");

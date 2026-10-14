@@ -43,4 +43,8 @@ export type Deal = {
   currency?: DealCurrency | null;
   priceStatus?: PriceStatus;
   priceNote?: string;
+  /** Local cover or box shot, served from /deals. Omitted when none was found. */
+  image?: string | null;
+  /** Vendor URL the image was downloaded from, usually the page og:image. */
+  imageSource?: string | null;
 };

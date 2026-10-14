@@ -9,14 +9,21 @@
     "originalPrice": 99,
     "discount": "70%",
     "isFree": false,
-    "tags": ["lo-fi", "saturation", "effect", "sale"],
+    "tags": [
+      "lo-fi",
+      "saturation",
+      "effect",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": "2026-10-16",
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "The XLN Audio product page prints \"On sale $29.00\" and \"$99.00\" for a one-time license. The XLN homepage prints \"70% off RC-20 Retro Color\" and \"Sale ends October 16, 2026.\" Rent-to-own at $4.99 / month for 20 months is a separate plan and is not the price stored here."
+    "priceNote": "The XLN Audio product page prints \"On sale $29.00\" and \"$99.00\" for a one-time license. The XLN homepage prints \"70% off RC-20 Retro Color\" and \"Sale ends October 16, 2026.\" Rent-to-own at $4.99 / month for 20 months is a separate plan and is not the price stored here.",
+    "image": "/deals/rc-20-retro-color.jpg",
+    "imageSource": "https://assets.xlnaudio.com/merchant-feed/FXFX0003.jpg"
   },
   {
     "id": "shaperbox-3",
@@ -28,14 +35,20 @@
     "originalPrice": 379,
     "discount": "76%",
     "isFree": false,
-    "tags": ["effects", "modulation", "sale"],
+    "tags": [
+      "effects",
+      "modulation",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "sale",
-    "priceNote": "The Cableguys product page shows a struck-through 379 €, a current price of 89 €, the label \"Black Friday Deal\", and the line \"Save 76% compared to individual prices.\" No end date was printed."
+    "priceNote": "The Cableguys product page shows a struck-through 379 \u20ac, a current price of 89 \u20ac, the label \"Black Friday Deal\", and the line \"Save 76% compared to individual prices.\" No end date was printed.",
+    "image": "/deals/shaperbox-3.png",
+    "imageSource": "https://www.cableguys.com/img/products/shaperbox-3/other/shaperbox_3_top-graphic.png"
   },
   {
     "id": "cableguys-bundle",
@@ -47,14 +60,20 @@
     "originalPrice": 713,
     "discount": "78%",
     "isFree": false,
-    "tags": ["effects", "bundle", "sale"],
+    "tags": [
+      "effects",
+      "bundle",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "sale",
-    "priceNote": "The Cableguys page shows a struck-through 713 €, a current price of 149 €, the label \"Black Friday Deal\", and the line \"Save 78% compared to buying individually!\" No end date was printed."
+    "priceNote": "The Cableguys page shows a struck-through 713 \u20ac, a current price of 149 \u20ac, the label \"Black Friday Deal\", and the line \"Save 78% compared to buying individually!\" No end date was printed.",
+    "image": "/deals/cableguys-bundle.png",
+    "imageSource": "https://www.cableguys.com/img/products/cableguys-bundle/cableguys-bundle-black-friday-2026.png"
   },
   {
     "id": "xlnt-hard-techno-vol-1",
@@ -66,18 +85,25 @@
     "originalPrice": 49.99,
     "discount": null,
     "isFree": false,
-    "tags": ["serum", "presets", "techno", "sale"],
+    "tags": [
+      "serum",
+      "presets",
+      "techno",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "The XLNT Sound product page prints Sale price $29.99, Regular price $49.99, and a badge \"Save $20.00\". The page says the pack is 150 Serum presets. No percentage and no end date were printed. The sold-out badge in the page markup is hidden, and the product variant is available."
+    "priceNote": "The XLNT Sound product page prints Sale price $29.99, Regular price $49.99, and a badge \"Save $20.00\". The page says the pack is 150 Serum presets. No percentage and no end date were printed. The sold-out badge in the page markup is hidden, and the product variant is available.",
+    "image": "/deals/xlnt-hard-techno-vol-1.webp",
+    "imageSource": "https://www.xlntsound.com/cdn/shop/files/DropsOnly-HardTechno960xBOX.png?v=1740162625&width=2048"
   },
   {
     "id": "monosounds-serum-2-starter",
-    "title": "Free Serum 2 Presets — Producer Starter Collection",
+    "title": "Free Serum 2 Presets \u2014 Producer Starter Collection",
     "vendor": "Monosounds",
     "category": "Free Synth Presets",
     "url": "https://monosounds.studio/product/serum-2-free-presets-download/",
@@ -85,14 +111,21 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["serum", "serum-2", "presets", "free"],
+    "tags": [
+      "serum",
+      "serum-2",
+      "presets",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "free",
-    "priceNote": "The Monosounds product page prints $0 next to \"email only, no card\" for Free Serum 2 Presets: 271 Patches (Producer Starter Collection). The page says the .fxp presets load in Serum 2 and Serum 1. The synth is not included."
+    "priceNote": "The Monosounds product page prints $0 next to \"email only, no card\" for Free Serum 2 Presets: 271 Patches (Producer Starter Collection). The page says the .fxp presets load in Serum 2 and Serum 1. The synth is not included.",
+    "image": "/deals/monosounds-serum-2-starter.png",
+    "imageSource": "https://monosounds.studio/wp-content/uploads/2026/07/cover-serum-2-free-presets-download.png"
   },
   {
     "id": "serum-2",
@@ -104,14 +137,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["synth", "wavetable", "serum"],
+    "tags": [
+      "synth",
+      "wavetable",
+      "serum"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": true,
     "featuredUntil": "2026-10-28",
     "currency": "USD",
     "priceStatus": "list",
-    "priceNote": "List price of $249.00 USD is printed on the Xfer Records product page. No discount was published."
+    "priceNote": "List price of $249.00 USD is printed on the Xfer Records product page. No discount was published.",
+    "image": "/deals/serum-2.png",
+    "imageSource": "https://xferrecords.com/assets/products-large/serum2_promo-3a72f21c8e6c81f5c65d1949cf6cd846cc793ad00def69d9ca18f46614f98778.png"
   },
   {
     "id": "valhalla-supermassive",
@@ -123,14 +162,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["reverb", "delay", "free"],
+    "tags": [
+      "reverb",
+      "delay",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": true,
     "featuredUntil": "2026-11-01",
     "currency": "USD",
     "priceStatus": "free",
-    "priceNote": "Valhalla DSP publishes Supermassive as a free download on the product page."
+    "priceNote": "Valhalla DSP publishes Supermassive as a free download on the product page.",
+    "image": "/deals/valhalla-supermassive.webp",
+    "imageSource": "https://valhalladsp.com/wp-content/uploads/2020/05/Supermassive_Aura_1300x540.png"
   },
   {
     "id": "synthhacker-free-preset-vault",
@@ -142,14 +187,22 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["serum", "serum-2", "diva", "presets", "free"],
+    "tags": [
+      "serum",
+      "serum-2",
+      "diva",
+      "presets",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": true,
     "featuredUntil": "2026-10-21",
     "currency": "GBP",
     "priceStatus": "free",
-    "priceNote": "Listed at £0 on the SynthHacker product page. More than 100 presets for Serum 2 and u-he Diva. The synths are not included."
+    "priceNote": "Listed at \u00a30 on the SynthHacker product page. More than 100 presets for Serum 2 and u-he Diva. The synths are not included.",
+    "image": "/deals/synthhacker-free-preset-vault.webp",
+    "imageSource": "https://synthhacker.com/cdn/shop/files/SynthHackerFreeVaultCoverArt.png?v=1758724919"
   },
   {
     "id": "xlnt-knocked-up-vol-1",
@@ -161,14 +214,21 @@
     "originalPrice": 49.99,
     "discount": "30%",
     "isFree": false,
-    "tags": ["serum-2", "presets", "bass-house", "sale"],
+    "tags": [
+      "serum-2",
+      "presets",
+      "bass-house",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": true,
     "featuredUntil": "2026-10-18",
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "Sale price $34.99 and compare-at $49.99 from the XLNT Sound product record on 14 Oct 2026. Serum 2 preset pack. No end date was published."
+    "priceNote": "Sale price $34.99 and compare-at $49.99 from the XLNT Sound product record on 14 Oct 2026. Serum 2 preset pack. No end date was published.",
+    "image": "/deals/xlnt-knocked-up-vol-1.webp",
+    "imageSource": "https://www.xlntsound.com/cdn/shop/files/DropsOnlyKnockedUpVol.1960x2.png?v=1774996566&width=2048"
   },
   {
     "id": "pigments-play",
@@ -180,14 +240,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["synth", "free", "pigments"],
+    "tags": [
+      "synth",
+      "free",
+      "pigments"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "free",
-    "priceNote": "Arturia's product page presents Pigments Play as a free instrument with 100 presets."
+    "priceNote": "Arturia's product page presents Pigments Play as a free instrument with 100 presets.",
+    "image": "/deals/pigments-play.png",
+    "imageSource": "https://medias.arturia.net/images/products/pigments-play/catalog-image.png"
   },
   {
     "id": "surge-xt",
@@ -199,14 +265,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["synth", "free", "open-source"],
+    "tags": [
+      "synth",
+      "free",
+      "open-source"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "free",
-    "priceNote": "Open-source synthesizer offered as a free download. The project site does not list a paid edition."
+    "priceNote": "Open-source synthesizer offered as a free download. The project site does not list a paid edition.",
+    "image": "/deals/surge-xt.png",
+    "imageSource": "https://surge-synthesizer.github.io/images/og_image.png"
   },
   {
     "id": "sonicspore-free-vital-bundle",
@@ -218,14 +290,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["vital", "presets", "free"],
+    "tags": [
+      "vital",
+      "presets",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "free",
-    "priceNote": "Listed at €0 on the Sonicspore store. Over 150 Vital presets plus LFO shapes. Vital itself is not included."
+    "priceNote": "Listed at \u20ac0 on the Sonicspore store. Over 150 Vital presets plus LFO shapes. Vital itself is not included.",
+    "image": "/deals/sonicspore-free-vital-bundle.webp",
+    "imageSource": "https://sonicsporesounds.com/cdn/shop/files/free-vital-vst-preset-bundle.jpg?v=1731322415"
   },
   {
     "id": "after-hours-diva",
@@ -237,14 +315,21 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["diva", "presets", "synthwave", "free"],
+    "tags": [
+      "diva",
+      "presets",
+      "synthwave",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": null,
     "priceStatus": "free",
-    "priceNote": "The author page describes a free 125-preset u-he Diva soundset. No numeric price is shown."
+    "priceNote": "The author page describes a free 125-preset u-he Diva soundset. No numeric price is shown.",
+    "image": "/deals/after-hours-diva.jpg",
+    "imageSource": "https://www.kevinhartnell.com/wp-content/uploads/2026/09/After-Hours-Diva-Soundset-Cover-Final-1024x1024.jpg"
   },
   {
     "id": "sonicspore-free-serum-packs",
@@ -256,14 +341,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["serum", "presets", "free"],
+    "tags": [
+      "serum",
+      "presets",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "free",
-    "priceNote": "Listed at €0 on the Sonicspore store. 100 Serum presets and LFO shapes. Serum is not included."
+    "priceNote": "Listed at \u20ac0 on the Sonicspore store. 100 Serum presets and LFO shapes. Serum is not included.",
+    "image": "/deals/sonicspore-free-serum-packs.webp",
+    "imageSource": "https://sonicsporesounds.com/cdn/shop/files/free-serum-preset-collection.png?v=1731322268"
   },
   {
     "id": "xlnt-xoxo-vol-1",
@@ -275,14 +366,21 @@
     "originalPrice": 49.99,
     "discount": "30%",
     "isFree": false,
-    "tags": ["serum-2", "presets", "trap", "sale"],
+    "tags": [
+      "serum-2",
+      "presets",
+      "trap",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "Sale price $34.99 and compare-at $49.99 from the XLNT Sound product record on 14 Oct 2026. Serum 2 preset pack. No end date was published."
+    "priceNote": "Sale price $34.99 and compare-at $49.99 from the XLNT Sound product record on 14 Oct 2026. Serum 2 preset pack. No end date was published.",
+    "image": "/deals/xlnt-xoxo-vol-1.webp",
+    "imageSource": "https://www.xlntsound.com/cdn/shop/files/DropsOnlyXOXOVol.1960x.png?v=1779311917&width=2048"
   },
   {
     "id": "xlnt-brostep-vol-1",
@@ -294,14 +392,23 @@
     "originalPrice": 74.99,
     "discount": "33%",
     "isFree": false,
-    "tags": ["serum", "serum-2", "presets", "drums", "loops", "sale"],
+    "tags": [
+      "serum",
+      "serum-2",
+      "presets",
+      "drums",
+      "loops",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "Sale price $49.99 and compare-at $74.99 from the XLNT Sound product record on 14 Oct 2026. Includes Serum presets, drums, bass loops, and one-shots. No end date was published."
+    "priceNote": "Sale price $49.99 and compare-at $74.99 from the XLNT Sound product record on 14 Oct 2026. Includes Serum presets, drums, bass loops, and one-shots. No end date was published.",
+    "image": "/deals/xlnt-brostep-vol-1.webp",
+    "imageSource": "https://www.xlntsound.com/cdn/shop/files/BROSTEPCROP.png?v=1743126663&width=2048"
   },
   {
     "id": "xlnt-wooktronic-vol-1",
@@ -313,18 +420,26 @@
     "originalPrice": 125,
     "discount": "40%",
     "isFree": false,
-    "tags": ["serum-2", "presets", "drums", "loops", "sale"],
+    "tags": [
+      "serum-2",
+      "presets",
+      "drums",
+      "loops",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "Sale price $74.99 and compare-at $125 from the XLNT Sound product record on 14 Oct 2026. Includes Serum 2 presets, drums, bass loops, and one-shots. No end date was published."
+    "priceNote": "Sale price $74.99 and compare-at $125 from the XLNT Sound product record on 14 Oct 2026. Includes Serum 2 presets, drums, bass loops, and one-shots. No end date was published.",
+    "image": "/deals/xlnt-wooktronic-vol-1.webp",
+    "imageSource": "https://www.xlntsound.com/cdn/shop/files/Wooktronic960x.png?v=1764354726&width=2048"
   },
   {
     "id": "cymatics-blossom",
-    "title": "Blossom — Lofi Sample Pack",
+    "title": "Blossom \u2014 Lofi Sample Pack",
     "vendor": "Cymatics",
     "category": "Underground Sample Packs",
     "url": "https://cymatics.fm/products/blossom-lofi-sample-pack",
@@ -332,18 +447,24 @@
     "originalPrice": 30,
     "discount": "50%",
     "isFree": false,
-    "tags": ["lofi", "samples", "sale"],
+    "tags": [
+      "lofi",
+      "samples",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "Cymatics catalog lists $15 with a compare-at price of $30 USD. No end date was published."
+    "priceNote": "Cymatics catalog lists $15 with a compare-at price of $30 USD. No end date was published.",
+    "image": "/deals/cymatics-blossom.webp",
+    "imageSource": "https://cymatics.fm/cdn/shop/products/min-blossom_1200x1200.png?v=1619797337"
   },
   {
     "id": "cymatics-venom",
-    "title": "VENOM — Serum Collection",
+    "title": "VENOM \u2014 Serum Collection",
     "vendor": "Cymatics",
     "category": "Underground Sample Packs",
     "url": "https://cymatics.fm/products/venom-serum-collection",
@@ -351,14 +472,20 @@
     "originalPrice": 275,
     "discount": "87%",
     "isFree": false,
-    "tags": ["serum", "presets", "sale"],
+    "tags": [
+      "serum",
+      "presets",
+      "sale"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "sale",
-    "priceNote": "Cymatics catalog lists $35 with a compare-at price of $275. That earlier price was not confirmed on a separate page, so treat the markdown as the store's compare-at figure."
+    "priceNote": "Cymatics catalog lists $35 with a compare-at price of $275. That earlier price was not confirmed on a separate page, so treat the markdown as the store's compare-at figure.",
+    "image": "/deals/cymatics-venom.webp",
+    "imageSource": "https://cymatics.fm/cdn/shop/files/Venom_serum_2_1200x1200.webp?v=1728500253"
   },
   {
     "id": "valhalla-vintageverb",
@@ -370,14 +497,19 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["reverb", "mix"],
+    "tags": [
+      "reverb",
+      "mix"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "list",
-    "priceNote": "List price of $50 USD on the Valhalla DSP shop. No discount was published."
+    "priceNote": "List price of $50 USD on the Valhalla DSP shop. No discount was published.",
+    "image": "/deals/valhalla-vintageverb.jpg",
+    "imageSource": "https://val-media-offload.s3.amazonaws.com/wp-content/uploads/2020/06/08074610/vintage-verb_1300x540.jpg"
   },
   {
     "id": "decapitator",
@@ -389,14 +521,19 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["saturation", "mix"],
+    "tags": [
+      "saturation",
+      "mix"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "list",
-    "priceNote": "List price of $199 on the Soundtoys product page. No discount was published."
+    "priceNote": "List price of $199 on the Soundtoys product page. No discount was published.",
+    "image": "/deals/decapitator.png",
+    "imageSource": "https://www.soundtoys.com/wp-content/uploads/DecapitatorFB_1200x628-1.png"
   },
   {
     "id": "fabfilter-pro-q-4",
@@ -408,14 +545,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["eq", "mix", "mastering"],
+    "tags": [
+      "eq",
+      "mix",
+      "mastering"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "list",
-    "priceNote": "List price of $199 on the FabFilter shop with currency set to USD. No discount was published."
+    "priceNote": "List price of $199 on the FabFilter shop with currency set to USD. No discount was published.",
+    "image": "/deals/fabfilter-pro-q-4.jpg",
+    "imageSource": "https://cdn-b.fabfilter.com/img/boxes/min/box-pro-q-4-min.jpg"
   },
   {
     "id": "pigments",
@@ -427,14 +570,19 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["synth", "wavetable"],
+    "tags": [
+      "synth",
+      "wavetable"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": true,
     "featuredUntil": "2026-10-01",
     "currency": "USD",
     "priceStatus": "list",
-    "priceNote": "List price of US$199 on the Arturia store. No discount was published. The featured flag expired on 1 Oct 2026."
+    "priceNote": "List price of US$199 on the Arturia store. No discount was published. The featured flag expired on 1 Oct 2026.",
+    "image": "/deals/pigments.png",
+    "imageSource": "https://medias.arturia.net/images/products/pigments/catalog-image.png"
   },
   {
     "id": "uhe-diva",
@@ -446,14 +594,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["synth", "analog", "diva"],
+    "tags": [
+      "synth",
+      "analog",
+      "diva"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "list",
-    "priceNote": "List price of €179 on u-he.com. A 2025 autumn promotion was not used because it is not a current verified sale."
+    "priceNote": "List price of \u20ac179 on u-he.com. A 2025 autumn promotion was not used because it is not a current verified sale.",
+    "image": "/deals/uhe-diva.jpg",
+    "imageSource": "https://u-he.com/products/diva/assets/images/uhe-diva-splash-photo-studio-setup-1100x350.jpg"
   },
   {
     "id": "uhe-hive-2",
@@ -465,18 +619,23 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["synth", "wavetable"],
+    "tags": [
+      "synth",
+      "wavetable"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "list",
-    "priceNote": "List price of €149 on u-he.com. No current discount was verified."
+    "priceNote": "List price of \u20ac149 on u-he.com. No current discount was verified.",
+    "image": "/deals/uhe-hive-2.jpg",
+    "imageSource": "https://u-he.com/products/hive/assets/images/uhe-hive-splash-photo-studio-setup-1100x350.jpg"
   },
   {
     "id": "cymatics-black-future-bass",
-    "title": "BLACK — Future Bass Serum Presets",
+    "title": "BLACK \u2014 Future Bass Serum Presets",
     "vendor": "Cymatics",
     "category": "Underground Sample Packs",
     "url": "https://cymatics.fm/products/vault-black-future-bass-serum-presets",
@@ -484,14 +643,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": false,
-    "tags": ["serum", "presets", "future-bass"],
+    "tags": [
+      "serum",
+      "presets",
+      "future-bass"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "list",
-    "priceNote": "Cymatics catalog lists $20. No compare-at price was published, so this is a list price, not a discount."
+    "priceNote": "Cymatics catalog lists $20. No compare-at price was published, so this is a list price, not a discount.",
+    "image": "/deals/cymatics-black-future-bass.webp",
+    "imageSource": "https://cymatics.fm/cdn/shop/files/BLACKFutureBassCollection_SerumPresets_1200x1200.webp?v=1716915998"
   },
   {
     "id": "sonicspore-pryzma",
@@ -503,14 +668,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["psytrance", "samples", "free"],
+    "tags": [
+      "psytrance",
+      "samples",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "free",
-    "priceNote": "Listed at €0 on the Sonicspore store. Royalty-free psytrance sample pack."
+    "priceNote": "Listed at \u20ac0 on the Sonicspore store. Royalty-free psytrance sample pack.",
+    "image": "/deals/sonicspore-pryzma.webp",
+    "imageSource": "https://sonicsporesounds.com/cdn/shop/files/free-psytrance-pack-pryzma-loops-samples.jpg?v=1733560206"
   },
   {
     "id": "sonicspore-brutal-breaks",
@@ -522,18 +693,25 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["drums", "breaks", "samples", "free"],
+    "tags": [
+      "drums",
+      "breaks",
+      "samples",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "EUR",
     "priceStatus": "free",
-    "priceNote": "Listed at €0 on the Sonicspore store. Free distorted drum loops."
+    "priceNote": "Listed at \u20ac0 on the Sonicspore store. Free distorted drum loops.",
+    "image": "/deals/sonicspore-brutal-breaks.webp",
+    "imageSource": "https://sonicsporesounds.com/cdn/shop/files/free-brutal-breaks-drum-loops-pack.jpg?v=1731321332"
   },
   {
     "id": "cymatics-cosmos",
-    "title": "Cosmos — EDM Drum Kit",
+    "title": "Cosmos \u2014 EDM Drum Kit",
     "vendor": "Cymatics",
     "category": "Underground Sample Packs",
     "url": "https://cymatics.fm/products/cosmos-edm-drum-kit-1",
@@ -541,14 +719,21 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["drums", "edm", "samples", "free"],
+    "tags": [
+      "drums",
+      "edm",
+      "samples",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": "USD",
     "priceStatus": "free",
-    "priceNote": "Listed at $0 in the Cymatics catalog."
+    "priceNote": "Listed at $0 in the Cymatics catalog.",
+    "image": "/deals/cymatics-cosmos.webp",
+    "imageSource": "https://cymatics.fm/cdn/shop/files/Cosmos_-_EDM_Drum_Kit_copy_166f1490-213e-4ce4-989e-83e4347b57dc_1200x1200.webp?v=1700491288"
   },
   {
     "id": "ghosthack-essential-sounds",
@@ -560,13 +745,20 @@
     "originalPrice": null,
     "discount": null,
     "isFree": true,
-    "tags": ["samples", "loops", "one-shots", "free"],
+    "tags": [
+      "samples",
+      "loops",
+      "one-shots",
+      "free"
+    ],
     "addedAt": "2026-10-14",
     "expiresAt": null,
     "featured": false,
     "featuredUntil": null,
     "currency": null,
     "priceStatus": "free",
-    "priceNote": "The Ghosthack page describes Essential Sounds as a free royalty-free pack. No numeric price is shown."
+    "priceNote": "The Ghosthack page describes Essential Sounds as a free royalty-free pack. No numeric price is shown.",
+    "image": "/deals/ghosthack-essential-sounds.jpg",
+    "imageSource": "https://www.ghosthack.de/media/c4/6b/f0/1668437611/studiomagic-ghosthack-essential-sounds.jpg"
   }
 ]

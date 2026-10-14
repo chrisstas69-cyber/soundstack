@@ -96,7 +96,7 @@ export function FeatureRequestForm() {
           placeholder="you@studio.com"
         />
         <label className="block" htmlFor="feature-note">
-          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+          <span className="text-xs uppercase tracking-[0.16em] text-faint">
             Short note
           </span>
           <textarea
@@ -108,7 +108,7 @@ export function FeatureRequestForm() {
             value={note}
             onChange={(event) => setNote(event.target.value)}
             placeholder="Where producers can find it, and how you will share the listing."
-            className="mt-2 w-full rounded-2xl border border-line bg-ink px-4 py-3 text-sm text-bone outline-none placeholder:text-mute"
+            className="mt-2 w-full rounded-2xl border border-line bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-faint focus-visible:border-accent"
           />
         </label>
       </div>
@@ -129,13 +129,13 @@ export function FeatureRequestForm() {
       <button
         type="submit"
         disabled={status.kind === "loading"}
-        className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-signal px-5 text-sm font-medium text-ink transition-colors hover:bg-[#ff7a5e] disabled:opacity-60"
+        className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-accent px-5 text-sm font-medium text-accent-ink transition-transform hover:-translate-y-px disabled:opacity-60"
       >
         {status.kind === "loading" ? "Sending…" : "Request a free feature"}
       </button>
       <p
         aria-live="polite"
-        className={`mt-3 min-h-5 text-sm ${status.kind === "error" ? "text-signal" : "text-bone"}`}
+        className={`mt-3 min-h-5 text-sm ${status.kind === "error" ? "text-sale" : "text-foreground"}`}
       >
         {message}
       </p>
@@ -168,7 +168,7 @@ function Field({
 }) {
   return (
     <label className="block" htmlFor={id}>
-      <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+      <span className="text-xs uppercase tracking-[0.16em] text-faint">
         {label}
       </span>
       <input
@@ -182,7 +182,7 @@ function Field({
         inputMode={inputMode}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl border border-line bg-ink px-4 text-sm text-bone outline-none placeholder:text-mute"
+        className="mt-2 h-12 w-full rounded-2xl border border-line bg-background px-4 text-sm text-foreground outline-none placeholder:text-faint focus-visible:border-accent"
       />
     </label>
   );
