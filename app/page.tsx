@@ -2,6 +2,7 @@ import { DealRadarFallback } from "@/components/deal-radar";
 import { DealRadarLoader } from "@/components/deal-radar-loader";
 import { Header } from "@/components/header";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { SponsorThanks } from "@/components/sponsor-thanks";
 import { formatIsoDate, getDeals, latestAddedAt } from "@/lib/deals";
 import { buildJsonLd, serializeJsonLd } from "@/lib/jsonld";
 import { siteName, sponsorHref } from "@/lib/site";
@@ -19,6 +20,9 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: jsonLd }}
       />
       <Header sponsorHref={sponsorHref()} />
+      <Suspense fallback={null}>
+        <SponsorThanks />
+      </Suspense>
       <main>
         <section className="mx-auto max-w-6xl px-5 pb-8 pt-14 md:pt-20">
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-signal">

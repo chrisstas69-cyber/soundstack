@@ -1,8 +1,16 @@
 import type { Deal, DealCategory } from "@/lib/types";
 import { CATEGORIES } from "@/lib/types";
 
-/** Featured through this UTC date, 30 days after the checkout date. */
-export const SPONSOR_FEATURED_DAYS = 30;
+/**
+ * Days from the checkout date until the listing drops off.
+ * featuredUntil is paidAt plus this many days, and the row is active only
+ * while that date is still in the future (UTC). A payment on the 14th is
+ * shown on the 14th through the 20th.
+ */
+export const SPONSOR_FEATURED_DAYS = 7;
+
+/** Outbound rel for a paid placement. */
+export const SPONSOR_LINK_REL = "sponsored noopener";
 
 const NAME_KEYS = new Set([
   "pluginname",
@@ -33,6 +41,11 @@ export type Sponsor = {
   category: DealCategory;
   paidAt: string;
   featuredUntil: string;
+  includedInNewsletter: boolean;
+  /** True after the owner alert was accepted by Resend. */
+  ownerAlertSent: boolean;
+  /** True after the buyer confirmation was accepted, or when there is no buyer email. */
+  buyerAlertSent: boolean;
 };
 
 export type CheckoutCustomField = {
@@ -106,6 +119,9 @@ export function sponsorFromCheckout(
       category: cleanCategory(draft.category),
       paidAt,
       featuredUntil: addUtcDays(paidAt, SPONSOR_FEATURED_DAYS),
+      includedInNewsletter: false,
+      ownerAlertSent: false,
+      buyerAlertSent: false,
     },
   };
 }
@@ -120,20 +136,31 @@ export function mergeSponsorsIntoDeals(
 
   const active = activeSponsors(sponsors, today);
   const pinned: Deal[] = [];
+  const pinnedByUrl = new Map<string, Deal>();
 
   for (const sponsor of active) {
     const key = normalizeUrlKey(sponsor.url);
+    const existingPin = pinnedByUrl.get(key);
+    if (existingPin) {
+      const openEnded = existingPin.featured && !existingPin.featuredUntil;
+      if (!openEnded) extendFeaturedUntil(existingPin, sponsor.featuredUntil);
+      continue;
+    }
+
     const index = copies.findIndex((deal) => normalizeUrlKey(deal.url) === key);
     if (index >= 0) {
       const deal = copies[index];
       pinExistingDeal(deal, sponsor.featuredUntil);
       pinned.push(deal);
+      pinnedByUrl.set(key, deal);
       copies.splice(index, 1);
       continue;
     }
 
     const created = sponsorToDeal(sponsor);
-    if (created) pinned.push(created);
+    if (!created) continue;
+    pinned.push(created);
+    pinnedByUrl.set(key, created);
   }
 
   return [...pinned, ...copies];
@@ -158,6 +185,7 @@ export function sponsorToDeal(sponsor: Sponsor): Deal | null {
     expiresAt: null,
     featured: true,
     featuredUntil: stored.featuredUntil,
+    sponsored: true,
     priceStatus: "omitted",
     priceNote: "Featured placement. The price is on the vendor page.",
   };
@@ -215,25 +243,36 @@ export function normalizeUrlKey(url: string): string {
   }
 }
 
-function activeSponsors(sponsors: Sponsor[], today: string): Sponsor[] {
-  const byUrl = new Map<string, Sponsor>();
+/** Active sponsors in paid order: earliest payment first, then session id. */
+export function activeSponsors(sponsors: Sponsor[], today: string): Sponsor[] {
+  if (!isIsoDate(today)) return [];
 
+  const active: Sponsor[] = [];
   for (const sponsor of sponsors) {
     const stored = sanitizeSponsor(sponsor);
-    if (!stored || stored.featuredUntil < today) continue;
-    const key = normalizeUrlKey(stored.url);
-    const current = byUrl.get(key);
-    if (!current || compareSponsors(stored, current) > 0) {
-      byUrl.set(key, stored);
-    }
+    if (!stored || !isSponsorActive(stored, today)) continue;
+    active.push(stored);
   }
 
-  return [...byUrl.values()].sort((a, b) => compareSponsors(b, a));
+  active.sort(comparePaidOrder);
+  return active;
 }
 
-function compareSponsors(a: Sponsor, b: Sponsor): number {
-  const byUntil = a.featuredUntil.localeCompare(b.featuredUntil);
-  if (byUntil !== 0) return byUntil;
+/** Sponsors the newsletter has not mentioned, still inside the feature window. */
+export function sponsorsPendingNewsletter(
+  sponsors: Sponsor[],
+  today: string,
+): Sponsor[] {
+  return activeSponsors(sponsors, today).filter(
+    (sponsor) => !sponsor.includedInNewsletter,
+  );
+}
+
+export function isSponsorActive(sponsor: Sponsor, today: string): boolean {
+  return isIsoDate(today) && sponsor.featuredUntil > today;
+}
+
+function comparePaidOrder(a: Sponsor, b: Sponsor): number {
   const byPaid = a.paidAt.localeCompare(b.paidAt);
   if (byPaid !== 0) return byPaid;
   return a.id.localeCompare(b.id);
@@ -242,7 +281,12 @@ function compareSponsors(a: Sponsor, b: Sponsor): number {
 function pinExistingDeal(deal: Deal, featuredUntil: string): void {
   const openEnded = deal.featured && !deal.featuredUntil;
   deal.featured = true;
+  deal.sponsored = true;
   if (openEnded) return;
+  extendFeaturedUntil(deal, featuredUntil);
+}
+
+function extendFeaturedUntil(deal: Deal, featuredUntil: string): void {
   if (!deal.featuredUntil || featuredUntil > deal.featuredUntil) {
     deal.featuredUntil = featuredUntil;
   }
@@ -451,7 +495,7 @@ function sponsorRows(parsed: unknown): unknown[] | null {
 
 export function sanitizeSponsor(value: unknown): Sponsor | null {
   if (!value || typeof value !== "object") return null;
-  const row = value as Partial<Sponsor>;
+  const row = value as Partial<Sponsor> & { amount?: number | null };
   if (typeof row.id !== "string" || !isSessionId(row.id)) return null;
   if (typeof row.name !== "string" || typeof row.url !== "string") return null;
   if (typeof row.paidAt !== "string" || typeof row.featuredUntil !== "string") {
@@ -464,10 +508,13 @@ export function sanitizeSponsor(value: unknown): Sponsor | null {
     return null;
   }
 
+  const amountSource =
+    typeof row.amountTotal === "number" ? row.amountTotal : row.amount;
+
   return {
     id: row.id,
     email: cleanEmail(typeof row.email === "string" ? row.email : null),
-    amountTotal: cleanAmount(row.amountTotal),
+    amountTotal: cleanAmount(amountSource),
     currency: cleanCurrency(typeof row.currency === "string" ? row.currency : null),
     name,
     url,
@@ -475,5 +522,8 @@ export function sanitizeSponsor(value: unknown): Sponsor | null {
     category: cleanCategory(typeof row.category === "string" ? row.category : ""),
     paidAt: row.paidAt,
     featuredUntil: row.featuredUntil,
+    includedInNewsletter: row.includedInNewsletter === true,
+    ownerAlertSent: row.ownerAlertSent === true,
+    buyerAlertSent: row.buyerAlertSent === true,
   };
 }

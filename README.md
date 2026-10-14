@@ -25,8 +25,11 @@ The radar, search, and category chips work without env vars. The sponsor button 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | For correct metadata | Canonical origin for Open Graph, sitemap, robots, and JSON-LD. Inlined at build time. |
-| `RESEND_API_KEY` | For newsletter | Resend API key used by `POST /api/newsletter`. |
+| `RESEND_API_KEY` | For newsletter and sponsor email | Resend API key used by `POST /api/newsletter` and the sponsor alerts. |
 | `RESEND_AUDIENCE_ID` | For newsletter | Audience id. If Resend rejects the legacy audience call, the route retries with the same id as a segment. |
+| `OWNER_ALERT_EMAIL` | For the owner alert | Inbox for `You made $149 from <Sponsor>` after a paid checkout. With the default from address, Resend only delivers to the account email, so use that address here until `RESEND_FROM` is verified. |
+| `RESEND_FROM` | Optional | From address for sponsor emails. Defaults to `onboarding@resend.dev`. Set a verified domain address (for example `SoundStack <alerts@yourdomain.com>`) so the buyer confirmation can leave the Resend sandbox. |
+| `ADMIN_TOKEN` | For the sponsor API | Bearer token for `GET` and `POST /api/sponsors/active`. |
 | `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` | For the sponsor CTA | Stripe Payment Link. The header link is omitted when this is empty. |
 | `STRIPE_WEBHOOK_SECRET` | For the webhook | Verifies `POST /api/stripe/webhook`. |
 | `STRIPE_SECRET_KEY` | Optional | Not used. Signature checks and sponsor persistence both use the webhook payload. |
@@ -67,7 +70,15 @@ Append an object to the array in `data/deals.json`. Keep ids unique. Dates are `
 
 The header CTA reads **Feature Your Plugin / Pack ($149)** and opens the Stripe Payment Link.
 
-A verified `checkout.session.completed` (and `checkout.session.async_payment_succeeded`) with `payment_status: paid` writes the sponsor to a private Vercel Blob at `sponsors/featured.json`. The homepage reads that document and pins the listing at the top of the radar with the Featured badge through `featuredUntil`: the checkout UTC date plus 30 days, inclusive. The sponsorship fee is not shown as the product price. When the URL matches a row already in `data/deals.json`, that row is pinned and its feature window is extended instead of adding a second card. Expired sponsors stay in the blob and drop off the radar.
+A verified `checkout.session.completed` (and `checkout.session.async_payment_succeeded`) with `payment_status: paid` writes the sponsor to a private Vercel Blob at `sponsors/featured.json`. The write is idempotent on the Checkout Session id: a retry keeps `includedInNewsletter` and does not send the emails again.
+
+The stored record has the product name, https URL, buyer email, amount in the smallest currency unit (`amountTotal`, so `14900` for $149), `paidAt`, `featuredUntil` (`paidAt` plus 7 days), and `includedInNewsletter: false`. The homepage reads that document on each request and pins every active sponsor at the top of the radar. A sponsor is active while `featuredUntil` is still in the future (UTC), so a checkout on 14 Oct is shown on the 14th through the 20th and drops off on the 21st. No redeploy is required.
+
+Active sponsors are ordered by `paidAt`, earliest payment in the #1 slot. A second payment for the same URL does not add another card; the listing stays up through the later `featuredUntil`. The card is labeled **Sponsored** and the outbound link uses `rel="sponsored noopener"`. The sponsorship fee is not shown as the product price. When the URL matches a row already in `data/deals.json`, that row is pinned instead of adding a second card. Expired sponsors stay in the blob and drop off the radar.
+
+After the write, Resend emails `OWNER_ALERT_EMAIL` with the subject `You made $149 from <Sponsor>` and sends the buyer a short confirmation. The from address is `RESEND_FROM` or `onboarding@resend.dev`. If the owner alert cannot be sent, the webhook returns 500 so Stripe retries; the listing is already stored. A buyer-mail failure is logged and does not fail the webhook.
+
+Point the Payment Link's confirmation redirect at `https://<your-domain>/?sponsored=1`. That URL shows a thank-you banner. Search and category changes keep the `sponsored` query so the banner stays up.
 
 Blob is used instead of Global Config (formerly Edge Config) because each checkout is a write of buyer data. Global Config is a read-optimized config store. Create a **private** Blob store so the stored email is not readable from a public URL. Without Blob credentials the radar still renders the curated list, and the webhook returns 500 so Stripe retries after the store is connected.
 
@@ -79,10 +90,10 @@ In the Stripe Dashboard, edit the Payment Link used by `NEXT_PUBLIC_STRIPE_PAYME
 
 | Label | Key | Buyer enters |
 | --- | --- | --- |
-| Plugin or pack name | `pluginname` | Listing title |
-| Plugin or pack URL | `pluginurl` | `https://` product page, or a host that will be stored as `https://` |
+| Product name | `product_name` | Listing title |
+| Product URL | `product_url` | `https://` product page, or a host that will be stored as `https://` |
 
-Set the keys explicitly when creating the link with the API (`custom_fields[].key`). In the Dashboard, Stripe may derive the key from the label. Either key above works, and so do `plugin_name` / `plugin_url`. If the key differs, the labels still match when they read "Plugin or pack name" and "Plugin or pack URL".
+`pluginname` / `pluginurl` and `plugin_name` / `plugin_url` still work. If the key differs, labels that mention a name or a URL are used.
 
 Optional fields:
 
@@ -91,7 +102,31 @@ Optional fields:
 
 Point the webhook endpoint at `https://<your-domain>/api/stripe/webhook` and subscribe to `checkout.session.completed` and `checkout.session.async_payment_succeeded`. Put the signing secret in `STRIPE_WEBHOOK_SECRET`.
 
-If you create Checkout Sessions in code instead of a Payment Link, send the same values on `metadata` (`pluginname`, `pluginurl`) or set `client_reference_id` to `Plugin name|https://example.com/product`. A Payment Link also copies a `client_reference_id` query parameter onto the session. Custom fields win when more than one source is present. A paid session that still has no name or https URL is acknowledged and not featured; fixing the Payment Link does not backfill that session.
+If you create Checkout Sessions in code instead of a Payment Link, send the same values on `metadata` (`product_name`, `product_url`) or set `client_reference_id` to `Plugin name|https://example.com/product`. A Payment Link also copies a `client_reference_id` query parameter onto the session. Custom fields win when more than one source is present. A paid session that still has no name or https URL is acknowledged and not featured; fixing the Payment Link does not backfill that session.
+
+### Newsletter inclusion
+
+`GET /api/sponsors/active` with `Authorization: Bearer $ADMIN_TOKEN` returns active sponsors that are not yet included in the newsletter, in paid order:
+
+```json
+{
+  "sponsors": [
+    {
+      "id": "cs_test_...",
+      "name": "Tape Stop",
+      "url": "https://example.com/tape-stop",
+      "email": "buyer@example.com",
+      "amount": 14900,
+      "currency": "usd",
+      "paidAt": "2026-10-14",
+      "featuredUntil": "2026-10-21",
+      "includedInNewsletter": false
+    }
+  ]
+}
+```
+
+`amount` is Stripe `amount_total` in the smallest currency unit. `POST` the same path with `{ "ids": ["cs_test_..."] }` to set `includedInNewsletter` on those sessions. Marking an id again is a no-op. The response lists `included` and `missing`. Without `ADMIN_TOKEN` the route returns 503. A missing or wrong bearer token returns 401. Responses send `Cache-Control: no-store`.
 
 ## Discoverability
 
@@ -106,6 +141,24 @@ If the production domain is not `https://soundstack.vercel.app`, set `NEXT_PUBLI
 
 ```bash
 npm run dev
+npm test
 npm run lint
 npm run build
 ```
+
+`npm test` signs a `checkout.session.completed` event and runs the webhook, homepage merge, and admin API in memory. To hit a running dev server instead:
+
+```bash
+SPONSOR_STORE=memory \
+STRIPE_WEBHOOK_SECRET=whsec_test \
+OWNER_ALERT_EMAIL=you@example.com \
+RESEND_API_KEY=re_... \
+ADMIN_TOKEN=dev-token \
+npm run dev
+```
+
+```bash
+STRIPE_WEBHOOK_SECRET=whsec_test npm run simulate:webhook
+```
+
+`SPONSOR_STORE=memory` is for local development only. Production ignores it.
