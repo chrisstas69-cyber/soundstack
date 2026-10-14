@@ -1,4 +1,5 @@
 import { Header } from "@/components/header";
+import Link from "next/link";
 import {
   foundingCheckoutHref,
   fullCheckoutHref,
@@ -58,9 +59,9 @@ export default function AdvertisePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-mute sm:flex-row sm:items-center sm:justify-between">
           <p>{siteName}. Prices checked against vendor pages.</p>
           <nav className="flex gap-4">
-            <a href="/" className="hover:text-bone">
+            <Link href="/" className="hover:text-bone">
               Radar
-            </a>
+            </Link>
             <a href="/llms.txt" className="hover:text-bone">
               llms.txt
             </a>

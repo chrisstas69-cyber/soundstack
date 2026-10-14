@@ -1,4 +1,6 @@
 import { siteName } from "@/lib/site";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
 export function Header({
   sponsor,
@@ -10,10 +12,10 @@ export function Header({
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-ink/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
-        <a href={homeHref} className="flex items-center gap-2.5">
+        <HomeLink href={homeHref}>
           <Mark />
           <span className="text-[15px] font-medium tracking-tight">{siteName}</span>
-        </a>
+        </HomeLink>
         {sponsor ? (
           <a
             href={sponsor.href}
@@ -26,6 +28,28 @@ export function Header({
         ) : null}
       </div>
     </header>
+  );
+}
+
+function HomeLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  const className = "flex items-center gap-2.5";
+  if (href.startsWith("/")) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
   );
 }
 

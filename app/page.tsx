@@ -1,4 +1,5 @@
 import { DealRadarFallback } from "@/components/deal-radar";
+import Link from "next/link";
 import { DealRadarLoader } from "@/components/deal-radar-loader";
 import { Header } from "@/components/header";
 import { NewsletterForm } from "@/components/newsletter-form";
@@ -60,9 +61,9 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-mute sm:flex-row sm:items-center sm:justify-between">
           <p>{siteName}. Prices checked against vendor pages.</p>
           <nav className="flex gap-4">
-            <a href="/advertise" className="hover:text-bone">
+            <Link href="/advertise" className="hover:text-bone">
               Advertise
-            </a>
+            </Link>
             <a href="/llms.txt" className="hover:text-bone">
               llms.txt
             </a>
