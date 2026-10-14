@@ -1,0 +1,23 @@
+# SoundStack
+
+> Curated deal radar for music producers: daily audio plugin sales, free synth presets, and boutique soundware.
+
+SoundStack keeps a short list of real vendor pages. A listing includes a price only when that price was read from the vendor page. Unlisted prices are omitted rather than guessed.
+
+## Key pages
+
+- [Deal radar](/): Search and category filters for the current list
+- [About](/about): How a listing is chosen and when a price is shown
+- [Feature a plugin or pack](/sponsor): $149 sponsorship checkout via Stripe Payment Link
+- [Sitemap](/sitemap.xml): Pages Next.js publishes for crawlers
+- [Robots](/robots.txt): Crawl rules, including common assistant crawlers
+
+## Categories
+
+- VST Plugins
+- Free Synth Presets (Serum, Vital, and Diva)
+- Underground Sample Packs
+
+## Data
+
+Listings live in `data/deals.json` as a JSON array. A daily script can append an object with the same fields. See the README for the schema.
