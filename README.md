@@ -2,7 +2,7 @@
 
 Curated deal radar for music producers: daily audio plugin sales, free synth presets, and boutique soundware.
 
-The homepage is a dark, searchable list of 30 checked listings in three categories: VST Plugins, Free Synth Presets, and Underground Sample Packs. Prices come from vendor pages. A discount is stored only when the vendor publishes a compare-at price.
+The homepage is a dark, searchable list of 36 checked listings in three categories: VST Plugins, Free Synth Presets, and Underground Sample Packs. Prices come from vendor pages. A discount is stored only when the vendor publishes a compare-at price.
 
 ## Stack
 
