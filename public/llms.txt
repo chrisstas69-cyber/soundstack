@@ -8,20 +8,20 @@ The canonical origin below is the default. If you deploy to another domain, set 
 
 ## Pages
 
-- [Deal radar](https://soundstack.vercel.app/): searchable homepage with category filter chips for VST Plugins, Free Synth Presets, and Underground Sample Packs
-- [About](https://soundstack.vercel.app/about): how prices are chosen, and the difference between Featured and Sponsored cards
-- [Advertise](https://soundstack.vercel.app/advertise): free early-partner features by default (`NEXT_PUBLIC_SPONSOR_MODE` unset or `free`). 7 days pinned, a newsletter mention, and the only ask is that they share the listing. The page has a request form and says paid slots at $149/week are coming later. Set the mode to `paid` to show the $79 founding offer and the $149 checkout instead.
-- [Sitemap](https://soundstack.vercel.app/sitemap.xml): public URL index
-- [Robots](https://soundstack.vercel.app/robots.txt): crawler rules
+- [Deal radar](https://getsoundstack.com/): searchable homepage with category filter chips for VST Plugins, Free Synth Presets, and Underground Sample Packs
+- [About](https://getsoundstack.com/about): how prices are chosen, and the difference between Featured and Sponsored cards
+- [Advertise](https://getsoundstack.com/advertise): free early-partner features by default (`NEXT_PUBLIC_SPONSOR_MODE` unset or `free`). 7 days pinned, a newsletter mention, and the only ask is that they share the listing. The page has a request form and says paid slots at $149/week are coming later. Set the mode to `paid` to show the $79 founding offer and the $149 checkout instead.
+- [Sitemap](https://getsoundstack.com/sitemap.xml): public URL index
+- [Robots](https://getsoundstack.com/robots.txt): crawler rules
 
 ## Actions
 
-- Newsletter: POST https://soundstack.vercel.app/api/newsletter with JSON `{"email":"producer@example.com"}`. The address is added to a Resend audience (`RESEND_API_KEY`, `RESEND_AUDIENCE_ID`).
-- Free feature request: POST https://soundstack.vercel.app/api/sponsors/feature-request with JSON `{"name":"Tape Stop","url":"https://example.com/tape-stop","email":"maker@example.com","note":"We will share the listing."}`. Emails `OWNER_ALERT_EMAIL` via Resend (`RESEND_FROM`, or `onboarding@resend.dev`). Subject: `New free feature request: <name>`. Leave `ss_hp` empty. Five requests per hour per IP.
-- Approve a free feature: POST https://soundstack.vercel.app/api/sponsors/free with `Authorization: Bearer $ADMIN_TOKEN` and JSON `{"name":"Tape Stop","url":"https://example.com/tape-stop","email":"maker@example.com","days":7}`. `days` defaults to 7. Stores the same sponsors blob as a paid checkout with amount 0. The homepage pins it and labels it Featured. A paid amount is labeled Sponsored.
+- Newsletter: POST https://getsoundstack.com/api/newsletter with JSON `{"email":"producer@example.com"}`. The address is added to a Resend audience (`RESEND_API_KEY`, `RESEND_AUDIENCE_ID`).
+- Free feature request: POST https://getsoundstack.com/api/sponsors/feature-request with JSON `{"name":"Tape Stop","url":"https://example.com/tape-stop","email":"maker@example.com","note":"We will share the listing."}`. Emails `OWNER_ALERT_EMAIL` via Resend (`RESEND_FROM`, or `onboarding@resend.dev`). Subject: `New free feature request: <name>`. Leave `ss_hp` empty. Five requests per hour per IP.
+- Approve a free feature: POST https://getsoundstack.com/api/sponsors/free with `Authorization: Bearer $ADMIN_TOKEN` and JSON `{"name":"Tape Stop","url":"https://example.com/tape-stop","email":"maker@example.com","days":7}`. `days` defaults to 7. Stores the same sponsors blob as a paid checkout with amount 0. The homepage pins it and labels it Featured. A paid amount is labeled Sponsored.
 - Sponsorship (paid mode): set `NEXT_PUBLIC_SPONSOR_MODE=paid`. When `NEXT_PUBLIC_STRIPE_FOUNDING_LINK` is an https URL, the header CTA "Feature Your Plugin ($79 founding, reg. $149)" opens it. Otherwise the header falls back to "Feature Your Plugin / Pack ($149)" on `NEXT_PUBLIC_STRIPE_FULL_LINK`. `/advertise` lists both prices and both checkout buttons. `NEXT_PUBLIC_STRIPE_PAYMENT_LINK` is the legacy link and currently points at the founding checkout. In free mode the header CTA is "Get Your Plugin Featured (Free)" and goes to `/advertise`.
-- Stripe webhook: POST https://soundstack.vercel.app/api/stripe/webhook. Verifies `STRIPE_WEBHOOK_SECRET`. A paid `checkout.session.completed` stores the sponsor in a private Vercel Blob (`BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN`), emails `OWNER_ALERT_EMAIL`, and the homepage pins that listing, labeled Sponsored, for 7 days (`featuredUntil` = paid date + 7, shown while that date is still in the future). The Payment Link needs required custom fields `product_name` and `product_url`. Thank-you page: `/?sponsored=1`.
-- Newsletter sponsors: GET https://soundstack.vercel.app/api/sponsors/active with `Authorization: Bearer $ADMIN_TOKEN` returns active sponsors not yet included. POST `{ "ids": ["cs_..."] }` marks them included. Complimentary ids that start with `free_` are accepted too.
+- Stripe webhook: POST https://getsoundstack.com/api/stripe/webhook. Verifies `STRIPE_WEBHOOK_SECRET`. A paid `checkout.session.completed` stores the sponsor in a private Vercel Blob (`BLOB_STORE_ID` or `BLOB_READ_WRITE_TOKEN`), emails `OWNER_ALERT_EMAIL`, and the homepage pins that listing, labeled Sponsored, for 7 days (`featuredUntil` = paid date + 7, shown while that date is still in the future). The Payment Link needs required custom fields `product_name` and `product_url`. Thank-you page: `/?sponsored=1`.
+- Newsletter sponsors: GET https://getsoundstack.com/api/sponsors/active with `Authorization: Bearer $ADMIN_TOKEN` returns active sponsors not yet included. POST `{ "ids": ["cs_..."] }` marks them included. Complimentary ids that start with `free_` are accepted too.
 
 ## Data
 
